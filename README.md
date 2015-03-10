@@ -22,8 +22,8 @@ Two types of resources are provided:
 * Singleton: Supports `GET` and `PUT`.
 * Collection: Supports `GET`, `POST`, `PUT`, and `DELETE`.
 
-Resources may also be made read-only.  This is best thought of as a
-micro-framework and implementations retain substantial flexibility.
+Resources may also be made read-only.  Since `luddite` is a
+micro-framework, implementations retain substantial flexibility.
 
 ## Media Types
 

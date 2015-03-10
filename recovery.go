@@ -34,7 +34,7 @@ func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, r *http.Request, next htt
 
 			rec.Logger.Printf("PANIC: %s\n%s", err, stack)
 
-			resp := &ErrorResponse{Code: -1, Message: fmt.Sprint(err)}
+			resp := NewError(EcodeInternal, err)
 			if rec.StackVisible {
 				resp.Stack = fmt.Sprintf("%s\n%s", err, stack)
 			}

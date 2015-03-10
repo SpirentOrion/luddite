@@ -94,3 +94,24 @@ func (r *userResource) Delete(req *http.Request, id string) (int, interface{}) {
 	delete(r.users, id)
 	return http.StatusNoContent, nil
 }
+
+func (r *userResource) Action(req *http.Request, id string, action string) (int, interface{}) {
+	switch action {
+	case "reset_password":
+		return r.resetPassword(req, id)
+	default:
+		return http.StatusNotFound, nil
+	}
+}
+
+func (r *userResource) resetPassword(req *http.Request, id string) (int, interface{}) {
+	r.Lock()
+	defer r.Unlock()
+
+	u, exists := r.users[id]
+	if !exists {
+		return http.StatusNotFound, nil
+	}
+	u.Password = "secret"
+	return http.StatusOK, nil
+}

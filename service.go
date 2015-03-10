@@ -1,8 +1,6 @@
 package luddite
 
 import (
-	"path"
-
 	"github.com/K-Phoen/http-negotiate/negotiate"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -30,18 +28,32 @@ func NewService() Service {
 	return &service{mux.NewRouter()}
 }
 
-func (s *service) AddSingletonResource(itemPath string, r Resource) {
-	addGetRoute(s.router, itemPath, r)
-	addUpdateRoute(s.router, itemPath, r)
+func (s *service) AddSingletonResource(basePath string, r Resource) {
+	// GET /basePath
+	addGetRoute(s.router, basePath, false, r)
+	// PUT /basePath
+	addUpdateRoute(s.router, basePath, false, r)
+	// POST /basePath/{action}
+	addActionRoute(s.router, basePath, false, r)
 }
 
 func (s *service) AddCollectionResource(basePath string, r Resource) {
-	itemPath := path.Join(basePath, "{id}")
+	// GET /basePath
 	addListRoute(s.router, basePath, r)
-	addGetRoute(s.router, itemPath, r)
-	addCreateRoute(s.router, basePath, itemPath, r)
-	addUpdateRoute(s.router, itemPath, r)
-	addDeleteRoute(s.router, itemPath, r)
+	// GET /basePath/{id}
+	addGetRoute(s.router, basePath, true, r)
+	// POST /basePath
+	addCreateRoute(s.router, basePath, r)
+	// PUT /basePath/{id}
+	addUpdateRoute(s.router, basePath, true, r)
+	// DELETE /basePath
+	addDeleteRoute(s.router, basePath, false, r)
+	// DELETE /basePath/{id}
+	addDeleteRoute(s.router, basePath, true, r)
+	// POST /basePath/{action}
+	addActionRoute(s.router, basePath, false, r)
+	// POST /basePath/{id}/{action}
+	addActionRoute(s.router, basePath, true, r)
 }
 
 func (s *service) Run(addr string) {
