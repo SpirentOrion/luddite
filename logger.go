@@ -3,7 +3,6 @@ package luddite
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/codegangsta/negroni"
@@ -15,8 +14,8 @@ type Logger struct {
 }
 
 // NewLogger returns a new Logger instance.
-func NewLogger() *Logger {
-	return &Logger{log.New(os.Stderr, "[negroni] ", 0)}
+func NewLogger(logger *log.Logger) *Logger {
+	return &Logger{logger}
 }
 
 func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

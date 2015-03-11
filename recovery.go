@@ -4,25 +4,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"runtime"
 )
 
 // Recovery is middleware handler that recovers from panics and sends a 500 error response containing an optional stack trace.
 type Recovery struct {
-	Logger       *log.Logger
-	StackVisible bool
-	StackAll     bool
-	StackSize    int
+	Logger        *log.Logger
+	StackAll      bool
+	StackSize     int
+	StacksVisible bool
 }
 
 // NewRecovery returns a new Recovery instance.
 func NewRecovery() *Recovery {
 	return &Recovery{
-		Logger:       log.New(os.Stderr, "[negroni] ", 0),
-		StackVisible: true,
-		StackAll:     false,
-		StackSize:    1024 * 8,
+		StackAll:      false,
+		StackSize:     1024 * 8,
+		StacksVisible: true,
 	}
 }
 
@@ -32,10 +30,12 @@ func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, r *http.Request, next htt
 			stack := make([]byte, rec.StackSize)
 			stack = stack[:runtime.Stack(stack, rec.StackAll)]
 
-			rec.Logger.Printf("PANIC: %s\n%s", err, stack)
+			if rec.Logger != nil {
+				rec.Logger.Printf("PANIC: %s\n%s", err, stack)
+			}
 
 			resp := NewError(EcodeInternal, err)
-			if rec.StackVisible {
+			if rec.StacksVisible {
 				resp.Stack = fmt.Sprintf("%s\n%s", err, stack)
 			}
 			writeResponse(rw, http.StatusInternalServerError, resp)

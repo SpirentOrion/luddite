@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/xml"
-	"errors"
+	"luddite"
 	"net/http"
 	"sync"
 )
@@ -68,7 +68,7 @@ func (r *userResource) Create(req *http.Request, value interface{}) (int, interf
 
 	_, exists := r.users[u.Name]
 	if exists {
-		return http.StatusBadRequest, errors.New("Already exists")
+		return http.StatusBadRequest, luddite.NewError(luddite.EcodeApplicationBase, u.Name)
 	}
 	r.users[u.Name] = u
 	return http.StatusCreated, u.SafeExport()

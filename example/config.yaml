@@ -1,0 +1,10 @@
+---
+service:
+  addr: :8000
+  debug:
+    requests: true
+    stacks: true
+  log:
+    prefix: "[service] "
+  trace:
+    url: http://foo.bar

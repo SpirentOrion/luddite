@@ -13,7 +13,7 @@ To run the example service:
 
     $ cd example
     $ go build
-    $ ./example
+    $ ./example -c config.yaml
 
 ## Resources
 
@@ -22,26 +22,21 @@ Two types of resources are provided:
 * Singleton: Supports `GET` and `PUT`.
 * Collection: Supports `GET`, `POST`, `PUT`, and `DELETE`.
 
-Resources may also be made read-only.  Since `luddite` is a
-micro-framework, implementations retain substantial flexibility.
-
-## Media Types
-
-Content negotiation for `application/json` and `application/xml` media
-types is built-in.  JSON is the default when clients do not include an
-`Accept` header.
+Resources may also implement `POST` actions and be made read-only.
+Since `luddite` is a micro-framework, implementations retain
+substantial flexibility.
 
 ## Middleware
 
 Currently, the framework registers several middleware handlers for each service:
 
-* Content negotiation
-* Logging
-* Panic recovery
+* Recovery: recovers from panics that occur in HTTP method handlers
+  and optionally includes stack traces in 500 responses
+* Logging: optionally logs requests and responses
+* Negotiation: performs JSON (default) and XML content negotiation
 
 # TODO
 
-* Configuration file
 * Additional middleware handlers
   * JWT decode and validation
   * Request id generation and distributed tracing
