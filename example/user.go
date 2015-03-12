@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/xml"
-	"luddite"
 	"net/http"
 	"sync"
+
+	"github.com/SpirentOrion/luddite"
 )
 
 type User struct {

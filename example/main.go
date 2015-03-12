@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/SpirentOrion/luddite"
 )
-import "luddite"
 
 type Config struct {
 	Service luddite.ServiceConfig
