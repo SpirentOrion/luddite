@@ -21,7 +21,14 @@ type ServiceConfig struct {
 		Prefix string
 	}
 	Trace struct {
-		URL string
+		// Enabled, when true, enables use of the trace package
+		Enabled bool
+		// Buffer sets the trace package's buffer size
+		Buffer int
+		// Recorder selects the trace recorder implementation: yaml | dynamodb
+		Recorder string
+		// Params is a colon-separated list of trace recorder constructor parameters
+		Params string
 	}
 }
 

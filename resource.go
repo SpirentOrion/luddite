@@ -1,7 +1,6 @@
 package luddite
 
 import (
-	"fmt"
 	"net/http"
 	"path"
 
@@ -31,18 +30,25 @@ import (
 type Resource interface {
 	// New returns a new instance of the resource.
 	New() interface{}
+
 	// Id returns a resource's identifier as a string.
 	Id(value interface{}) string
+
 	// List returns an HTTP status code and a slice of resources (or error).
 	List(req *http.Request) (int, interface{})
+
 	// Get returns an HTTP status code and a single resource (or error).
 	Get(req *http.Request, id string) (int, interface{})
+
 	// Create returns an HTTP status code and a new resource (or error).
 	Create(req *http.Request, value interface{}) (int, interface{})
+
 	// Update returns an HTTP status code and an updated resource (or error).
 	Update(req *http.Request, id string, value interface{}) (int, interface{})
+
 	// Delete returns an HTTP status code and a deleted resource (or error).
 	Delete(req *http.Request, id string) (int, interface{})
+
 	// Action returns an HTTP status code and a response body (or error).
 	Action(req *http.Request, id string, action string) (int, interface{})
 }
@@ -85,7 +91,7 @@ func addCreateRoute(router *mux.Router, basePath string, r Resource) {
 		if status == http.StatusCreated {
 			url, err := router.Get(itemPath).URL("id", r.Id(v1))
 			if err == nil {
-				rw.Header().Add("Location", fmt.Sprint(url))
+				rw.Header().Add("Location", url.String())
 			}
 		}
 		writeResponse(rw, status, v1)

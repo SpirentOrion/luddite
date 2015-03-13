@@ -7,4 +7,11 @@ service:
   log:
     prefix: "[service] "
   trace:
-    url: http://foo.bar
+    enabled: true
+    buffer: 100
+    # YAML-based tracing
+    recorder: yaml
+    params: trace.yaml
+    # DynamoDB-based tracing
+    #recorder: dynamodb
+    #params: us-west-2:Trace:access_key:secret_key

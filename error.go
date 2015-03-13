@@ -43,8 +43,16 @@ func NewError(code int, args ...interface{}) *Error {
 	format, ok := errorMessages[code]
 	if !ok {
 		format = errorMessages[EcodeUnknown]
+		args = nil
 	}
-	message := fmt.Sprintf(format, args...)
+
+	var message string
+	if len(args) != 0 {
+		message = fmt.Sprintf(format, args...)
+	} else {
+		message = format
+	}
+
 	return &Error{
 		Code:    code,
 		Message: message,
