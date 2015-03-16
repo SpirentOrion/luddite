@@ -32,6 +32,8 @@ Currently, the framework registers several middleware handlers for each service:
 
 * Recovery: recovers from panics that occur in HTTP method handlers
   and optionally includes stack traces in 500 responses
+* Trace: generates a unique request id and optionally records traces
+  to a persistent backend
 * Logging: optionally logs requests and responses
 * Negotiation: performs JSON (default) and XML content negotiation
 
@@ -39,5 +41,4 @@ Currently, the framework registers several middleware handlers for each service:
 
 * Additional middleware handlers
   * JWT decode and validation
-  * Request id generation and distributed tracing
 * Metrics / statsd integration
