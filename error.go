@@ -3,6 +3,7 @@ package luddite
 import (
 	"encoding/xml"
 	"fmt"
+	"net/http"
 )
 
 const (
@@ -14,8 +15,8 @@ const (
 	EcodeDeserializationFailed = 4
 	EcodeIdentifierMismatch    = 5
 
-	// Service's error codes
-	EcodeApplicationBase = 100
+	// Service-specific error codes
+	EcodeServiceBase = 100
 )
 
 var errorMessages = map[int]string{
@@ -39,8 +40,24 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-func NewError(code int, args ...interface{}) *Error {
-	format, ok := errorMessages[code]
+func NewError(req *http.Request, code int, args ...interface{}) *Error {
+	var (
+		s      *service
+		format string
+		ok     bool
+	)
+
+	if code >= EcodeServiceBase {
+		// Lookup a service-specific error message
+		if s, ok = serviceContext(req); ok {
+			format, ok = s.errorMessages[code]
+		}
+	} else {
+		// Lookup a framework error message
+		format, ok = errorMessages[code]
+	}
+
+	// If no message was found, use a safe error message along with the caller's error code
 	if !ok {
 		format = errorMessages[EcodeUnknown]
 		args = nil

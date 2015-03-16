@@ -13,6 +13,7 @@ import (
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
 	"github.com/codegangsta/negroni"
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -26,6 +27,12 @@ type Service interface {
 	// (supporting GET, POST, PUT, and DELETE methods).
 	AddCollectionResource(basePath string, r Resource)
 
+	// AddErrors registers a map of error codes to string
+	// messages. All error codes must be greater than or equal to
+	// EcodeServiceBase. Error codes less than this constant are
+	// reserved.
+	AddErrors(errors map[int]string)
+
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
 	// passed to NewService.
@@ -33,56 +40,67 @@ type Service interface {
 }
 
 type service struct {
-	config  *ServiceConfig
-	logger  *log.Logger
-	router  *mux.Router
-	negroni *negroni.Negroni
+	config        *ServiceConfig
+	errorMessages map[int]string
+	logger        *log.Logger
+	router        *mux.Router
+	negroni       *negroni.Negroni
 }
 
 func NewService(config *ServiceConfig) Service {
 	return &service{
-		config:  config,
-		logger:  log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
-		router:  mux.NewRouter(),
-		negroni: negroni.New(),
+		config:        config,
+		errorMessages: make(map[int]string),
+		logger:        log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
+		router:        mux.NewRouter(),
+		negroni:       negroni.New(),
 	}
 }
 
 func (s *service) AddSingletonResource(basePath string, r Resource) {
 	// GET /basePath
-	addGetRoute(s.router, basePath, false, r)
+	addGetRoute(s, basePath, false, r)
 
 	// PUT /basePath
-	addUpdateRoute(s.router, basePath, false, r)
+	addUpdateRoute(s, basePath, false, r)
 
 	// POST /basePath/{action}
-	addActionRoute(s.router, basePath, false, r)
+	addActionRoute(s, basePath, false, r)
 }
 
 func (s *service) AddCollectionResource(basePath string, r Resource) {
 	// GET /basePath
-	addListRoute(s.router, basePath, r)
+	addListRoute(s, basePath, r)
 
 	// GET /basePath/{id}
-	addGetRoute(s.router, basePath, true, r)
+	addGetRoute(s, basePath, true, r)
 
 	// POST /basePath
-	addCreateRoute(s.router, basePath, r)
+	addCreateRoute(s, basePath, r)
 
 	// PUT /basePath/{id}
-	addUpdateRoute(s.router, basePath, true, r)
+	addUpdateRoute(s, basePath, true, r)
 
 	// DELETE /basePath
-	addDeleteRoute(s.router, basePath, false, r)
+	addDeleteRoute(s, basePath, false, r)
 
 	// DELETE /basePath/{id}
-	addDeleteRoute(s.router, basePath, true, r)
+	addDeleteRoute(s, basePath, true, r)
 
 	// POST /basePath/{action}
-	addActionRoute(s.router, basePath, false, r)
+	addActionRoute(s, basePath, false, r)
 
 	// POST /basePath/{id}/{action}
-	addActionRoute(s.router, basePath, true, r)
+	addActionRoute(s, basePath, true, r)
+}
+
+func (s *service) AddErrors(errors map[int]string) {
+	for code, message := range errors {
+		if code < EcodeServiceBase {
+			panic(fmt.Sprintf("service-specific error messages must have codes >= %d", EcodeServiceBase))
+		}
+		s.errorMessages[code] = message
+	}
 }
 
 func (s *service) Run() error {
@@ -177,4 +195,28 @@ func (s *service) useLoggerMiddleware() error {
 func (s *service) useNegotiatorMiddleware() error {
 	s.negroni.Use(negotiate.FormatNegotiator([]string{"application/json", "application/xml"}))
 	return nil
+}
+
+func ServiceContext(req *http.Request) (Service, bool) {
+	v, ok := context.GetOk(req, "luddite:service")
+	if !ok {
+		return nil, ok
+	}
+
+	s, ok := v.(Service)
+	return s, ok
+}
+
+func serviceContext(req *http.Request) (*service, bool) {
+	v, ok := context.GetOk(req, "luddite:service")
+	if !ok {
+		return nil, ok
+	}
+
+	s, ok := v.(*service)
+	return s, ok
+}
+
+func setServiceContext(req *http.Request, s *service) {
+	context.Set(req, "luddite:service", s)
 }

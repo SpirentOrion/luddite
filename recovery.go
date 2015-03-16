@@ -24,7 +24,7 @@ func NewRecovery() *Recovery {
 	}
 }
 
-func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	defer func() {
 		if err := recover(); err != nil {
 			stack := make([]byte, rec.StackSize)
@@ -34,13 +34,13 @@ func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, r *http.Request, next htt
 				rec.Logger.Printf("PANIC: %s\n%s", err, stack)
 			}
 
-			resp := NewError(EcodeInternal, err)
+			resp := NewError(req, EcodeInternal, err)
 			if rec.StacksVisible {
 				resp.Stack = fmt.Sprintf("%s\n%s", err, stack)
 			}
-			writeResponse(rw, http.StatusInternalServerError, resp)
+			writeResponse(rw, req, http.StatusInternalServerError, resp)
 		}
 	}()
 
-	next(rw, r)
+	next(rw, req)
 }
