@@ -4,26 +4,39 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
+
+	"github.com/gorilla/schema"
 )
+
+var formDecoder = schema.NewDecoder()
 
 func readRequest(req *http.Request, r Resource) (interface{}, error) {
 	switch ct := req.Header.Get("Content-Type"); ct {
+	case "application/x-www-form-urlencoded":
+		if err := req.ParseForm(); err != nil {
+			return nil, NewError(EcodeDeserializationFailed, err)
+		}
+		v := r.New()
+		if err := formDecoder.Decode(v, req.PostForm); err != nil {
+			return nil, NewError(EcodeDeserializationFailed, err)
+		}
+		return v, nil
 	case "application/json":
 		decoder := json.NewDecoder(req.Body)
 		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			err = NewError(EcodeDeserializationFailed, err)
+			return nil, NewError(EcodeDeserializationFailed, err)
 		}
-		return v, err
+		return v, nil
 	case "application/xml":
 		decoder := xml.NewDecoder(req.Body)
 		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			err = NewError(EcodeDeserializationFailed, err)
+			return nil, NewError(EcodeDeserializationFailed, err)
 		}
-		return v, err
+		return v, nil
 	default:
 		return nil, NewError(EcodeUnsupportedMediaType, ct)
 	}
