@@ -39,6 +39,12 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
+// NewError allocates and initializes an Error. If a non-nil
+// errorMessages map is passed, the error message string is resolved
+// using this map. Otherwise a map containing common error message
+// strings is used. Services or resources should generally use error
+// code values greater than or equal to EcodeServiceBase. Error codes
+// below this value are reserved for common use.
 func NewError(errorMessages map[int]string, code int, args ...interface{}) *Error {
 	var (
 		format string
