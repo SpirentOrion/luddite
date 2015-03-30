@@ -13,7 +13,6 @@ import (
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
 	"github.com/codegangsta/negroni"
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -26,12 +25,6 @@ type Service interface {
 	// AddCollectionResource registers a collection-style resource
 	// (supporting GET, POST, PUT, and DELETE methods).
 	AddCollectionResource(basePath string, r Resource)
-
-	// AddErrors registers a map of error codes to string
-	// messages. All error codes must be greater than or equal to
-	// EcodeServiceBase. Error codes less than this constant are
-	// reserved.
-	AddErrors(errors map[int]string)
 
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
@@ -49,11 +42,10 @@ type service struct {
 
 func NewService(config *ServiceConfig) Service {
 	return &service{
-		config:        config,
-		errorMessages: make(map[int]string),
-		logger:        log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
-		router:        mux.NewRouter(),
-		negroni:       negroni.New(),
+		config:  config,
+		logger:  log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
+		router:  mux.NewRouter(),
+		negroni: negroni.New(),
 	}
 }
 
@@ -94,13 +86,16 @@ func (s *service) AddCollectionResource(basePath string, r Resource) {
 	addActionRoute(s, basePath, true, r)
 }
 
-func (s *service) AddErrors(errors map[int]string) {
-	for code, message := range errors {
-		if code < EcodeServiceBase {
-			panic(fmt.Sprintf("service-specific error messages must have codes >= %d", EcodeServiceBase))
-		}
+func (s *service) AddErrors(errorMessages map[int]string) {
+	// Merge the caller's error messages into the service's
+	// map. Any duplicated mappings are replaced.
+	for code, message := range errorMessages {
 		s.errorMessages[code] = message
 	}
+}
+
+func (s *service) Errors() map[int]string {
+	return s.errorMessages
 }
 
 func (s *service) Run() error {
@@ -195,28 +190,4 @@ func (s *service) useLoggerMiddleware() error {
 func (s *service) useNegotiatorMiddleware() error {
 	s.negroni.Use(negotiate.FormatNegotiator([]string{"application/json", "application/xml"}))
 	return nil
-}
-
-func ServiceContext(req *http.Request) (Service, bool) {
-	v, ok := context.GetOk(req, "luddite:service")
-	if !ok {
-		return nil, ok
-	}
-
-	s, ok := v.(Service)
-	return s, ok
-}
-
-func serviceContext(req *http.Request) (*service, bool) {
-	v, ok := context.GetOk(req, "luddite:service")
-	if !ok {
-		return nil, ok
-	}
-
-	s, ok := v.(*service)
-	return s, ok
-}
-
-func setServiceContext(req *http.Request, s *service) {
-	context.Set(req, "luddite:service", s)
 }

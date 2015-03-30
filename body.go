@@ -14,11 +14,11 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 	switch ct := req.Header.Get("Content-Type"); ct {
 	case "application/x-www-form-urlencoded":
 		if err := req.ParseForm(); err != nil {
-			return nil, NewError(req, EcodeDeserializationFailed, err)
+			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		v := r.New()
 		if err := formDecoder.Decode(v, req.PostForm); err != nil {
-			return nil, NewError(req, EcodeDeserializationFailed, err)
+			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return v, nil
 	case "application/json":
@@ -26,7 +26,7 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			return nil, NewError(req, EcodeDeserializationFailed, err)
+			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return v, nil
 	case "application/xml":
@@ -34,22 +34,22 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			return nil, NewError(req, EcodeDeserializationFailed, err)
+			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return v, nil
 	default:
-		return nil, NewError(req, EcodeUnsupportedMediaType, ct)
+		return nil, NewError(nil, EcodeUnsupportedMediaType, ct)
 	}
 }
 
-func writeResponse(rw http.ResponseWriter, req *http.Request, status int, v interface{}) (err error) {
+func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
 	var b []byte
 	if v != nil {
 		switch v.(type) {
 		case *Error:
 			break
 		case error:
-			v = NewError(req, EcodeInternal, v)
+			v = NewError(nil, EcodeInternal, v)
 			break
 		}
 		switch rw.Header().Get("Content-Type") {
@@ -57,7 +57,7 @@ func writeResponse(rw http.ResponseWriter, req *http.Request, status int, v inte
 			b, err = json.Marshal(v)
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
-				b, err = json.Marshal(NewError(req, EcodeSerializationFailed, err))
+				b, err = json.Marshal(NewError(nil, EcodeSerializationFailed, err))
 				if err != nil {
 					rw.Write(b)
 				}
@@ -68,7 +68,7 @@ func writeResponse(rw http.ResponseWriter, req *http.Request, status int, v inte
 			b, err = xml.Marshal(v)
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
-				b, err = xml.Marshal(NewError(req, EcodeSerializationFailed, err))
+				b, err = xml.Marshal(NewError(nil, EcodeSerializationFailed, err))
 				if err != nil {
 					rw.Write(b)
 				}

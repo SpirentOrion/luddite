@@ -38,7 +38,7 @@ func (r *userResource) Id(value interface{}) string {
 	return u.Name
 }
 
-func (r *userResource) List(req *http.Request) (int, interface{}) {
+func (r *userResource) List(s luddite.Service, req *http.Request) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -51,7 +51,7 @@ func (r *userResource) List(req *http.Request) (int, interface{}) {
 	return http.StatusOK, us
 }
 
-func (r *userResource) Get(req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Get(s luddite.Service, req *http.Request, id string) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -62,20 +62,20 @@ func (r *userResource) Get(req *http.Request, id string) (int, interface{}) {
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Create(req *http.Request, value interface{}) (int, interface{}) {
+func (r *userResource) Create(s luddite.Service, req *http.Request, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
 
 	_, exists := r.users[u.Name]
 	if exists {
-		return http.StatusBadRequest, luddite.NewError(req, EcodeUserExists, u.Name)
+		return http.StatusBadRequest, luddite.NewError(errorMessages, EcodeUserExists, u.Name)
 	}
 	r.users[u.Name] = u
 	return http.StatusCreated, u.SafeExport()
 }
 
-func (r *userResource) Update(req *http.Request, id string, value interface{}) (int, interface{}) {
+func (r *userResource) Update(s luddite.Service, req *http.Request, id string, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
@@ -88,7 +88,7 @@ func (r *userResource) Update(req *http.Request, id string, value interface{}) (
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Delete(req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Delete(s luddite.Service, req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -96,16 +96,16 @@ func (r *userResource) Delete(req *http.Request, id string) (int, interface{}) {
 	return http.StatusNoContent, nil
 }
 
-func (r *userResource) Action(req *http.Request, id string, action string) (int, interface{}) {
+func (r *userResource) Action(s luddite.Service, req *http.Request, id string, action string) (int, interface{}) {
 	switch action {
 	case "reset_password":
-		return r.resetPassword(req, id)
+		return r.resetPassword(s, req, id)
 	default:
 		return http.StatusNotFound, nil
 	}
 }
 
-func (r *userResource) resetPassword(req *http.Request, id string) (int, interface{}) {
+func (r *userResource) resetPassword(s luddite.Service, req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 

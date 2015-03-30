@@ -34,7 +34,6 @@ func main() {
 
 	s := luddite.NewService(&cfg.Service)
 	s.AddCollectionResource("/users", newUserResource())
-	s.AddErrors(errorMessages)
 
 	if err := s.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

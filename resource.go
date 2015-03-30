@@ -35,31 +35,30 @@ type Resource interface {
 	Id(value interface{}) string
 
 	// List returns an HTTP status code and a slice of resources (or error).
-	List(req *http.Request) (int, interface{})
+	List(s Service, req *http.Request) (int, interface{})
 
 	// Get returns an HTTP status code and a single resource (or error).
-	Get(req *http.Request, id string) (int, interface{})
+	Get(s Service, req *http.Request, id string) (int, interface{})
 
 	// Create returns an HTTP status code and a new resource (or error).
-	Create(req *http.Request, value interface{}) (int, interface{})
+	Create(s Service, req *http.Request, value interface{}) (int, interface{})
 
 	// Update returns an HTTP status code and an updated resource (or error).
-	Update(req *http.Request, id string, value interface{}) (int, interface{})
+	Update(s Service, req *http.Request, id string, value interface{}) (int, interface{})
 
 	// Delete returns an HTTP status code and a deleted resource (or error).
-	Delete(req *http.Request, id string) (int, interface{})
+	Delete(s Service, req *http.Request, id string) (int, interface{})
 
 	// Action returns an HTTP status code and a response body (or error).
-	Action(req *http.Request, id string, action string) (int, interface{})
+	Action(s Service, req *http.Request, id string, action string) (int, interface{})
 }
 
 type ResourceActionHandler func(*http.Request) (int, interface{})
 
 func addListRoute(s *service, basePath string, r Resource) {
 	s.router.HandleFunc(basePath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
-		status, v := r.List(req)
-		writeResponse(rw, req, status, v)
+		status, v := r.List(s, req)
+		writeResponse(rw, status, v)
 	}).Methods("GET")
 }
 
@@ -71,10 +70,9 @@ func addGetRoute(s *service, basePath string, withId bool, r Resource) {
 		itemPath = basePath
 	}
 	route := s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
 		id, _ := mux.Vars(req)["id"]
-		status, v := r.Get(req, id)
-		writeResponse(rw, req, status, v)
+		status, v := r.Get(s, req, id)
+		writeResponse(rw, status, v)
 	}).Methods("GET")
 	if withId {
 		route.Name(itemPath)
@@ -84,20 +82,19 @@ func addGetRoute(s *service, basePath string, withId bool, r Resource) {
 func addCreateRoute(s *service, basePath string, r Resource) {
 	itemPath := path.Join(basePath, "{id}")
 	s.router.HandleFunc(basePath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
 		v0, err := readRequest(req, r)
 		if err != nil {
-			writeResponse(rw, req, http.StatusBadRequest, err)
+			writeResponse(rw, http.StatusBadRequest, err)
 			return
 		}
-		status, v1 := r.Create(req, v0)
+		status, v1 := r.Create(s, req, v0)
 		if status == http.StatusCreated {
 			url, err := s.router.Get(itemPath).URL("id", r.Id(v1))
 			if err == nil {
 				rw.Header().Add("Location", url.String())
 			}
 		}
-		writeResponse(rw, req, status, v1)
+		writeResponse(rw, status, v1)
 	}).Methods("POST")
 }
 
@@ -109,19 +106,18 @@ func addUpdateRoute(s *service, basePath string, withId bool, r Resource) {
 		itemPath = basePath
 	}
 	s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
 		id, _ := mux.Vars(req)["id"]
 		v0, err := readRequest(req, r)
 		if err != nil {
-			writeResponse(rw, req, http.StatusBadRequest, err)
+			writeResponse(rw, http.StatusBadRequest, err)
 			return
 		}
 		if withId && id != r.Id(v0) {
-			writeResponse(rw, req, http.StatusBadRequest, NewError(req, EcodeIdentifierMismatch))
+			writeResponse(rw, http.StatusBadRequest, NewError(nil, EcodeIdentifierMismatch))
 			return
 		}
-		status, v1 := r.Update(req, id, v0)
-		writeResponse(rw, req, status, v1)
+		status, v1 := r.Update(s, req, id, v0)
+		writeResponse(rw, status, v1)
 	}).Methods("PUT")
 }
 
@@ -133,10 +129,9 @@ func addDeleteRoute(s *service, basePath string, withId bool, r Resource) {
 		itemPath = basePath
 	}
 	s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
 		id, _ := mux.Vars(req)["id"]
-		status, v := r.Delete(req, id)
-		writeResponse(rw, req, status, v)
+		status, v := r.Delete(s, req, id)
+		writeResponse(rw, status, v)
 	}).Methods("DELETE")
 }
 
@@ -148,10 +143,9 @@ func addActionRoute(s *service, basePath string, withId bool, r Resource) {
 		actionPath = path.Join(basePath, "{action}")
 	}
 	s.router.HandleFunc(actionPath, func(rw http.ResponseWriter, req *http.Request) {
-		setServiceContext(req, s)
 		id, _ := mux.Vars(req)["id"]
 		action, _ := mux.Vars(req)["action"]
-		status, v := r.Action(req, id, action)
-		writeResponse(rw, req, status, v)
+		status, v := r.Action(s, req, id, action)
+		writeResponse(rw, status, v)
 	}).Methods("POST")
 }
