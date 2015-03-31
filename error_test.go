@@ -17,6 +17,8 @@ func TestNewError(t *testing.T) {
 		if e.Message != "Hello world: foo" {
 			t.Error("error message not set")
 		}
+	} else {
+		t.Error("no error returned")
 	}
 
 	// Test common error string lookups
@@ -28,6 +30,8 @@ func TestNewError(t *testing.T) {
 		if e.Message != commonErrorMessages[EcodeInternal] {
 			t.Error("error message not set")
 		}
+	} else {
+		t.Error("no error returned")
 	}
 
 	e = NewError(nil, EcodeInternal) // should resolve to errorMessages
@@ -38,6 +42,8 @@ func TestNewError(t *testing.T) {
 		if e.Message != commonErrorMessages[EcodeInternal] {
 			t.Error("error message not set")
 		}
+	} else {
+		t.Error("no error returned")
 	}
 
 	e = NewError(errorMessages, EcodeUnsupportedMediaType) // should resolve to errorMessages
@@ -48,6 +54,8 @@ func TestNewError(t *testing.T) {
 		if e.Message != errorMessages[EcodeUnsupportedMediaType] {
 			t.Error("error message not set")
 		}
+	} else {
+		t.Error("no error returned")
 	}
 
 	// Test failsafe
@@ -59,5 +67,7 @@ func TestNewError(t *testing.T) {
 		if e.Message != commonErrorMessages[EcodeUnknown] {
 			t.Error("error message not set")
 		}
+	} else {
+		t.Error("no error returned")
 	}
 }
