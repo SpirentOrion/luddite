@@ -51,14 +51,20 @@ func NewError(errorMessages map[int]string, code int, args ...interface{}) *Erro
 		ok     bool
 	)
 
-	// Lookup an error message string by error code
+	// Lookup an error message string by error code: first try the
+	// caller provided error message map with fallback to the
+	// common error message map.
 	if errorMessages != nil {
 		format, ok = errorMessages[code]
-	} else {
+	}
+
+	if !ok {
 		format, ok = commonErrorMessages[code]
 	}
 
-	// If no message was found, use a known-safe error message along with the caller's error code
+	// If no error message could be found, failsafe by using a
+	// known-good common error message along with the caller's
+	// error code.
 	if !ok {
 		format = commonErrorMessages[EcodeUnknown]
 		args = nil
