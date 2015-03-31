@@ -33,10 +33,11 @@ type Service interface {
 }
 
 type service struct {
-	config  *ServiceConfig
-	logger  *log.Logger
-	router  *mux.Router
-	negroni *negroni.Negroni
+	config        *ServiceConfig
+	errorMessages map[int]string
+	logger        *log.Logger
+	router        *mux.Router
+	negroni       *negroni.Negroni
 }
 
 func NewService(config *ServiceConfig) Service {
@@ -50,39 +51,51 @@ func NewService(config *ServiceConfig) Service {
 
 func (s *service) AddSingletonResource(basePath string, r Resource) {
 	// GET /basePath
-	addGetRoute(s.router, basePath, false, r)
+	addGetRoute(s, basePath, false, r)
 
 	// PUT /basePath
-	addUpdateRoute(s.router, basePath, false, r)
+	addUpdateRoute(s, basePath, false, r)
 
 	// POST /basePath/{action}
-	addActionRoute(s.router, basePath, false, r)
+	addActionRoute(s, basePath, false, r)
 }
 
 func (s *service) AddCollectionResource(basePath string, r Resource) {
 	// GET /basePath
-	addListRoute(s.router, basePath, r)
+	addListRoute(s, basePath, r)
 
 	// GET /basePath/{id}
-	addGetRoute(s.router, basePath, true, r)
+	addGetRoute(s, basePath, true, r)
 
 	// POST /basePath
-	addCreateRoute(s.router, basePath, r)
+	addCreateRoute(s, basePath, r)
 
 	// PUT /basePath/{id}
-	addUpdateRoute(s.router, basePath, true, r)
+	addUpdateRoute(s, basePath, true, r)
 
 	// DELETE /basePath
-	addDeleteRoute(s.router, basePath, false, r)
+	addDeleteRoute(s, basePath, false, r)
 
 	// DELETE /basePath/{id}
-	addDeleteRoute(s.router, basePath, true, r)
+	addDeleteRoute(s, basePath, true, r)
 
 	// POST /basePath/{action}
-	addActionRoute(s.router, basePath, false, r)
+	addActionRoute(s, basePath, false, r)
 
 	// POST /basePath/{id}/{action}
-	addActionRoute(s.router, basePath, true, r)
+	addActionRoute(s, basePath, true, r)
+}
+
+func (s *service) AddErrors(errorMessages map[int]string) {
+	// Merge the caller's error messages into the service's
+	// map. Any duplicated mappings are replaced.
+	for code, message := range errorMessages {
+		s.errorMessages[code] = message
+	}
+}
+
+func (s *service) Errors() map[int]string {
+	return s.errorMessages
 }
 
 func (s *service) Run() error {

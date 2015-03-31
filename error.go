@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	// Framework's error codes
+	// Common error codes
 	EcodeUnknown               = 0
 	EcodeInternal              = 1
 	EcodeUnsupportedMediaType  = 2
@@ -14,11 +14,11 @@ const (
 	EcodeDeserializationFailed = 4
 	EcodeIdentifierMismatch    = 5
 
-	// Service's error codes
-	EcodeApplicationBase = 100
+	// Service-specific error codes
+	EcodeServiceBase = 1024
 )
 
-var errorMessages = map[int]string{
+var commonErrorMessages = map[int]string{
 	EcodeUnknown:               "Unknown error",
 	EcodeInternal:              "Internal error",
 	EcodeUnsupportedMediaType:  "Unsupported media type: %s",
@@ -39,13 +39,38 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-func NewError(code int, args ...interface{}) *Error {
-	format, ok := errorMessages[code]
+// NewError allocates and initializes an Error. If a non-nil
+// errorMessages map is passed, the error message string is resolved
+// using this map. Otherwise a map containing common error message
+// strings is used. Services or resources should generally use error
+// code values greater than or equal to EcodeServiceBase. Error codes
+// below this value are reserved for common use.
+func NewError(errorMessages map[int]string, code int, args ...interface{}) *Error {
+	var (
+		format string
+		ok     bool
+	)
+
+	// Lookup an error message string by error code: first try the
+	// caller provided error message map with fallback to the
+	// common error message map.
+	if errorMessages != nil {
+		format, ok = errorMessages[code]
+	}
+
 	if !ok {
-		format = errorMessages[EcodeUnknown]
+		format, ok = commonErrorMessages[code]
+	}
+
+	// If no error message could be found, failsafe by using a
+	// known-good common error message along with the caller's
+	// error code.
+	if !ok {
+		format = commonErrorMessages[EcodeUnknown]
 		args = nil
 	}
 
+	// Optionally format the error message
 	var message string
 	if len(args) != 0 {
 		message = fmt.Sprintf(format, args...)
