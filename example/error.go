@@ -7,6 +7,6 @@ const (
 	EcodeUserExists = luddite.EcodeServiceBase
 )
 
-var errorMessages = map[int]string{
-	EcodeUserExists: "User already exists: %s",
+var errorDefs = map[int]luddite.ErrorDefinition{
+	EcodeUserExists: {"USER_ALREADY_EXISTS", "User already exists: %s"},
 }

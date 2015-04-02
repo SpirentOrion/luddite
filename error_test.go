@@ -1,71 +1,74 @@
 package luddite
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-var errorMessages = map[int]string{
-	EcodeUnsupportedMediaType: "Error string override",
-	EcodeServiceBase:          "Hello world: %s",
+var errorDefs = map[int]ErrorDefinition{
+	EcodeUnsupportedMediaType: {"UNSUPPORTED_MEDIA_TYPE", "Error override"},
+	EcodeServiceBase:          {"HELLO_WORLD", "Hello world: %s"},
 }
 
 func TestNewError(t *testing.T) {
-	// Test custom error string lookups
-	e := NewError(errorMessages, EcodeServiceBase, "foo") // should resolve to errorMessages
+	// Test custom error lookups
+	e := NewError(errorDefs, EcodeServiceBase, "foo") // should resolve to errorDefs
 	if e != nil {
-		if e.Code != EcodeServiceBase {
+		if e.Code != errorDefs[EcodeServiceBase].Code {
 			t.Error("error code not set")
 		}
-		if e.Message != "Hello world: foo" {
-			t.Error("error message not set")
+		if e.Message != fmt.Sprintf(errorDefs[EcodeServiceBase].Format, "foo") {
+			t.Error("error message not formatted")
 		}
 	} else {
 		t.Error("no error returned")
 	}
 
-	// Test common error string lookups
-	e = NewError(errorMessages, EcodeInternal) // should resolve to commonErrorMessages
+	// Test common error lookups
+	e = NewError(errorDefs, EcodeInternal, "oh noes!") // should resolve to commonErrorDefs
 	if e != nil {
-		if e.Code != EcodeInternal {
+		if e.Code != commonErrorDefs[EcodeInternal].Code {
 			t.Error("error code not set")
 		}
-		if e.Message != commonErrorMessages[EcodeInternal] {
-			t.Error("error message not set")
+		if e.Message != fmt.Sprintf(commonErrorDefs[EcodeInternal].Format, "oh noes!") {
+			t.Error("error message not formatted")
 		}
 	} else {
 		t.Error("no error returned")
 	}
 
-	e = NewError(nil, EcodeInternal) // should resolve to errorMessages
+	e = NewError(nil, EcodeInternal, "oh noes!") // should resolve to commonErrorDefs
 	if e != nil {
-		if e.Code != EcodeInternal {
+		if e.Code != commonErrorDefs[EcodeInternal].Code {
 			t.Error("error code not set")
 		}
-		if e.Message != commonErrorMessages[EcodeInternal] {
-			t.Error("error message not set")
+		if e.Message != fmt.Sprintf(commonErrorDefs[EcodeInternal].Format, "oh noes!") {
+			t.Error("error message not formatted")
 		}
 	} else {
 		t.Error("no error returned")
 	}
 
-	e = NewError(errorMessages, EcodeUnsupportedMediaType) // should resolve to errorMessages
+	e = NewError(errorDefs, EcodeUnsupportedMediaType, "blah/blah") // should resolve to errorDefs
 	if e != nil {
-		if e.Code != EcodeUnsupportedMediaType {
+		if e.Code != errorDefs[EcodeUnsupportedMediaType].Code {
 			t.Error("error code not set")
 		}
-		if e.Message != errorMessages[EcodeUnsupportedMediaType] {
-			t.Error("error message not set")
+		if e.Message != fmt.Sprintf(errorDefs[EcodeUnsupportedMediaType].Format, "blah/blah") {
+			t.Error("error message not formatted")
 		}
 	} else {
 		t.Error("no error returned")
 	}
 
 	// Test failsafe
-	e = NewError(errorMessages, EcodeServiceBase+1) // should resolve to commonErrorMessages
+	e = NewError(errorDefs, EcodeServiceBase+1) // should resolve to commonErrorDefs
 	if e != nil {
-		if e.Code != EcodeServiceBase+1 {
+		if e.Code != commonErrorDefs[EcodeUnknown].Code {
 			t.Error("error code not set")
 		}
-		if e.Message != commonErrorMessages[EcodeUnknown] {
-			t.Error("error message not set")
+		if e.Message != fmt.Sprintf(commonErrorDefs[EcodeUnknown].Format, EcodeServiceBase+1) {
+			t.Error("error message not formatted")
 		}
 	} else {
 		t.Error("no error returned")
