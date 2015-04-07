@@ -1,12 +1,9 @@
 package main
 
-import "github.com/SpirentOrion/luddite"
-
 const (
-	// Service's error codes
-	EcodeUserExists = luddite.EcodeServiceBase
+	EcodeUserExists = "USER_ALREADY_EXISTS"
 )
 
-var errorDefs = map[int]luddite.ErrorDefinition{
-	EcodeUserExists: {"USER_ALREADY_EXISTS", "User already exists: %s"},
+var errorDefs = map[string]string{
+	EcodeUserExists: "User already exists: %s",
 }

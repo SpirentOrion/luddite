@@ -6,31 +6,21 @@ import (
 )
 
 const (
-	// Common error codes
-	EcodeUnknown               = 0
-	EcodeInternal              = 1
-	EcodeUnsupportedMediaType  = 2
-	EcodeSerializationFailed   = 3
-	EcodeDeserializationFailed = 4
-	EcodeIdentifierMismatch    = 5
-
-	// Service-specific error codes
-	EcodeServiceBase = 1024
+	EcodeUnknown               = "UNKNOWN_ERROR"
+	EcodeInternal              = "INTERNAL_ERROR"
+	EcodeUnsupportedMediaType  = "UNSUPPORTED_MEDIA_TYPE"
+	EcodeSerializationFailed   = "SERIALIZATION_FAILED"
+	EcodeDeserializationFailed = "DESERIALIZATION_FAILED"
+	EcodeResourceIdMismatch    = "RESOURCE_ID_MISMATCH"
 )
 
-var commonErrorDefs = map[int]ErrorDefinition{
-	EcodeUnknown:               {"UNKNOWN_ERROR", "Unknown error: %d"},
-	EcodeInternal:              {"INTERNAL_ERROR", "Internal error: %v"},
-	EcodeUnsupportedMediaType:  {"UNSUPPORTED_MEDIA_TYPE", "Unsupported media type: %s"},
-	EcodeSerializationFailed:   {"SERIALIZATION_FAILED", "Serialization failed: %s"},
-	EcodeDeserializationFailed: {"DESERIALIZATION_FAILED", "Deserialization failed: %s"},
-	EcodeIdentifierMismatch:    {"RESOURCE_ID_MISMATCH", "Resource identifier in URL doesn't match value in body"},
-}
-
-// ErrorDefinition defines a structured error that can be returned in 4xx and 5xx responses.
-type ErrorDefinition struct {
-	Code   string
-	Format string
+var commonErrorMap = map[string]string{
+	EcodeUnknown:               "Unknown error: %d",
+	EcodeInternal:              "Internal error: %v",
+	EcodeUnsupportedMediaType:  "Unsupported media type: %s",
+	EcodeSerializationFailed:   "Serialization failed: %s",
+	EcodeDeserializationFailed: "Deserialization failed: %s",
+	EcodeResourceIdMismatch:    "Resource identifier in URL doesn't match value in body",
 }
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
@@ -45,42 +35,43 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-// NewError allocates and initializes an Error. If a non-nil errors
+// NewError allocates and initializes an Error. If a non-nil errorMap
 // map is passed, the error is built using this map. Otherwise a map
 // containing common errors is used as a fallback.
-func NewError(errorDefs map[int]ErrorDefinition, code int, args ...interface{}) *Error {
+func NewError(errorMap map[string]string, code string, args ...interface{}) *Error {
 	var (
-		def ErrorDefinition
-		ok  bool
+		format string
+		ok     bool
 	)
 
-	// Lookup an error definition: first try the caller provided
+	// Lookup an error format string: first try the caller provided
 	// error map with fallback to the common error map.
-	if errorDefs != nil {
-		def, ok = errorDefs[code]
+	if errorMap != nil {
+		format, ok = errorMap[code]
 	}
 
 	if !ok {
-		def, ok = commonErrorDefs[code]
+		format, ok = commonErrorMap[code]
 	}
 
 	// If no error definition could be found, failsafe by using a
 	// known-good common error along with the caller's error code.
 	if !ok {
-		def = commonErrorDefs[EcodeUnknown]
 		args = []interface{}{code}
+		format = commonErrorMap[EcodeUnknown]
+		code = EcodeUnknown
 	}
 
 	// Optionally format the error message
 	var message string
-	if def.Format != "" && len(args) != 0 {
-		message = fmt.Sprintf(def.Format, args...)
+	if format != "" && len(args) != 0 {
+		message = fmt.Sprintf(format, args...)
 	} else {
-		message = def.Format
+		message = format
 	}
 
 	return &Error{
-		Code:    def.Code,
+		Code:    code,
 		Message: message,
 	}
 }

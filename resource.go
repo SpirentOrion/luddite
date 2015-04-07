@@ -113,7 +113,7 @@ func addUpdateRoute(s *service, basePath string, withId bool, r Resource) {
 			return
 		}
 		if withId && id != r.Id(v0) {
-			writeResponse(rw, http.StatusBadRequest, NewError(nil, EcodeIdentifierMismatch))
+			writeResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
 			return
 		}
 		status, v1 := r.Update(s, req, id, v0)
