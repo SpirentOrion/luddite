@@ -69,7 +69,7 @@ func (r *userResource) Create(s luddite.Service, req *http.Request, value interf
 
 	_, exists := r.users[u.Name]
 	if exists {
-		return http.StatusBadRequest, luddite.NewError(errorMessages, EcodeUserExists, u.Name)
+		return http.StatusBadRequest, luddite.NewError(errorDefs, EcodeUserExists, u.Name)
 	}
 	r.users[u.Name] = u
 	return http.StatusCreated, u.SafeExport()
