@@ -11,8 +11,8 @@ with the [Orion REST API Standards][apistds].
 
 To run the example service:
 
+    $ make
     $ cd example
-    $ go get . && go build
     $ ./example -c config.yaml
 
 ## Resources
