@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/K-Phoen/http-negotiate/negotiate"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
@@ -188,6 +187,7 @@ func (s *service) useLoggerMiddleware() error {
 }
 
 func (s *service) useNegotiatorMiddleware() error {
-	s.negroni.Use(negotiate.FormatNegotiator([]string{"application/json", "application/xml"}))
+	n := NewNegotiator([]string{"application/json", "application/xml"})
+	s.negroni.Use(n)
 	return nil
 }
