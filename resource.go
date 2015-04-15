@@ -149,3 +149,40 @@ func addActionRoute(s *service, basePath string, withId bool, r Resource) {
 		writeResponse(rw, status, v)
 	}).Methods("POST")
 }
+
+// NotImplementedResource returns HTTP 501 NotImplemented for all HTTP methods.
+type NotImplementedResource struct {
+	Resource
+}
+
+func (r *NotImplementedResource) New() interface{} {
+	return nil
+}
+
+func (r *NotImplementedResource) Id(value interface{}) string {
+	return ""
+}
+
+func (r *NotImplementedResource) List(s Service, req *http.Request) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Get(s Service, req *http.Request, id string) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Create(s Service, req *http.Request, value interface{}) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Update(s Service, req *http.Request, id string, value interface{}) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Delete(s Service, req *http.Request, id string) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Action(s Service, req *http.Request, id, action string) (int, interface{}) {
+	return http.StatusNotImplemented, nil
+}
