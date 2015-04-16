@@ -39,10 +39,10 @@ endif
 #
 
 build: setup
-	go get -t $(REPO_PATH)
-	go build -a -v $(REPO_PATH)
+	go get -t $(REPO_PATH)/...
+	go build -a -v $(REPO_PATH)/...
 	go build -a -v -o $(EXAMPLE_BIN) $(REPO_PATH)/example
-	go test $(REPO_PATH)
+	go test $(REPO_PATH)/...
 
 clean:
 	rm -f $(EXAMPLE_BIN)
