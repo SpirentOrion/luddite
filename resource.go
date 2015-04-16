@@ -156,7 +156,7 @@ type NotImplementedResource struct {
 }
 
 func (r *NotImplementedResource) New() interface{} {
-	return nil
+	return &NotImplementedResource{}
 }
 
 func (r *NotImplementedResource) Id(value interface{}) string {
