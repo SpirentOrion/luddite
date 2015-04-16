@@ -33,6 +33,7 @@ var (
 )
 
 type sampleResource struct {
+	NotImplementedResource
 }
 
 func (r *sampleResource) New() interface{} {
@@ -41,30 +42,6 @@ func (r *sampleResource) New() interface{} {
 
 func (r *sampleResource) Id(value interface{}) string {
 	return strconv.Itoa(value.(*sample).Id)
-}
-
-func (r *sampleResource) List(s Service, req *http.Request) (int, interface{}) {
-	return http.StatusNotImplemented, nil
-}
-
-func (r *sampleResource) Get(s Service, req *http.Request, id string) (int, interface{}) {
-	return http.StatusNotImplemented, nil
-}
-
-func (r *sampleResource) Create(s Service, req *http.Request, value interface{}) (int, interface{}) {
-	return http.StatusNotImplemented, nil
-}
-
-func (r *sampleResource) Update(s Service, req *http.Request, id string, value interface{}) (int, interface{}) {
-	return http.StatusNotImplemented, nil
-}
-
-func (r *sampleResource) Delete(s Service, req *http.Request, id string) (int, interface{}) {
-	return http.StatusNotImplemented, nil
-}
-
-func (r *sampleResource) Action(s Service, req *http.Request, id string, action string) (int, interface{}) {
-	return http.StatusNotImplemented, nil
 }
 
 func TestReadJson(t *testing.T) {
