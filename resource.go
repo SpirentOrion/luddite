@@ -2,9 +2,11 @@ package luddite
 
 import (
 	"net/http"
+	"net/url"
 	"path"
 
-	"github.com/gorilla/mux"
+	"github.com/SpirentOrion/httprouter"
+	"golang.org/x/net/context"
 )
 
 // Resource is a set of REST-oriented HTTP method handlers.
@@ -35,78 +37,76 @@ type Resource interface {
 	Id(value interface{}) string
 
 	// List returns an HTTP status code and a slice of resources (or error).
-	List(s Service, req *http.Request) (int, interface{})
+	List(ctx context.Context, req *http.Request) (int, interface{})
 
 	// Get returns an HTTP status code and a single resource (or error).
-	Get(s Service, req *http.Request, id string) (int, interface{})
+	Get(ctx context.Context, req *http.Request, id string) (int, interface{})
 
 	// Create returns an HTTP status code and a new resource (or error).
-	Create(s Service, req *http.Request, value interface{}) (int, interface{})
+	Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{})
 
 	// Update returns an HTTP status code and an updated resource (or error).
-	Update(s Service, req *http.Request, id string, value interface{}) (int, interface{})
+	Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{})
 
 	// Delete returns an HTTP status code and a deleted resource (or error).
-	Delete(s Service, req *http.Request, id string) (int, interface{})
+	Delete(ctx context.Context, req *http.Request, id string) (int, interface{})
 
 	// Action returns an HTTP status code and a response body (or error).
-	Action(s Service, req *http.Request, id string, action string) (int, interface{})
+	Action(ctx context.Context, req *http.Request, id string, action string) (int, interface{})
 }
 
-type ResourceActionHandler func(*http.Request) (int, interface{})
-
-func addListRoute(s *service, basePath string, r Resource) {
-	s.router.HandleFunc(basePath, func(rw http.ResponseWriter, req *http.Request) {
-		status, v := r.List(s, req)
+func addListRoute(router *httprouter.Router, basePath string, r Resource) {
+	router.GET(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+		status, v := r.List(ctx, req)
 		writeResponse(rw, status, v)
-	}).Methods("GET")
+	})
 }
 
-func addGetRoute(s *service, basePath string, withId bool, r Resource) {
+func addGetRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
-		itemPath = path.Join(basePath, "{id}")
+		itemPath = path.Join(basePath, ":id")
 	} else {
 		itemPath = basePath
 	}
-	route := s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		id, _ := mux.Vars(req)["id"]
-		status, v := r.Get(s, req, id)
+	router.GET(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+		vars := httprouter.ContextParams(ctx)
+		id := vars.ByName("id")
+		status, v := r.Get(ctx, req, id)
 		writeResponse(rw, status, v)
-	}).Methods("GET")
-	if withId {
-		route.Name(itemPath)
-	}
+	})
 }
 
-func addCreateRoute(s *service, basePath string, r Resource) {
-	itemPath := path.Join(basePath, "{id}")
-	s.router.HandleFunc(basePath, func(rw http.ResponseWriter, req *http.Request) {
+func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
+	router.POST(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		v0, err := readRequest(req, r)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, err)
 			return
 		}
-		status, v1 := r.Create(s, req, v0)
+		status, v1 := r.Create(ctx, req, v0)
 		if status == http.StatusCreated {
-			url, err := s.router.Get(itemPath).URL("id", r.Id(v1))
-			if err == nil {
-				rw.Header().Add("Location", url.String())
+			url := url.URL{
+				Scheme: req.URL.Scheme,
+				Host:   req.URL.Host,
+				Path:   path.Join(basePath, r.Id(v1)),
 			}
+			rw.Header().Add(HeaderLocation, url.String())
 		}
 		writeResponse(rw, status, v1)
-	}).Methods("POST")
+	})
 }
 
-func addUpdateRoute(s *service, basePath string, withId bool, r Resource) {
+func addUpdateRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
-		itemPath = path.Join(basePath, "{id}")
+		itemPath = path.Join(basePath, ":id")
 	} else {
 		itemPath = basePath
 	}
-	s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		id, _ := mux.Vars(req)["id"]
+	router.PUT(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+		vars := httprouter.ContextParams(ctx)
+		id := vars.ByName("id")
 		v0, err := readRequest(req, r)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, err)
@@ -116,38 +116,43 @@ func addUpdateRoute(s *service, basePath string, withId bool, r Resource) {
 			writeResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
 			return
 		}
-		status, v1 := r.Update(s, req, id, v0)
+		status, v1 := r.Update(ctx, req, id, v0)
 		writeResponse(rw, status, v1)
-	}).Methods("PUT")
+	})
 }
 
-func addDeleteRoute(s *service, basePath string, withId bool, r Resource) {
+func addDeleteRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
-		itemPath = path.Join(basePath, "{id}")
+		itemPath = path.Join(basePath, ":id")
 	} else {
 		itemPath = basePath
 	}
-	s.router.HandleFunc(itemPath, func(rw http.ResponseWriter, req *http.Request) {
-		id, _ := mux.Vars(req)["id"]
-		status, v := r.Delete(s, req, id)
+	router.DELETE(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+		vars := httprouter.ContextParams(ctx)
+		id := vars.ByName("id")
+		status, v := r.Delete(ctx, req, id)
 		writeResponse(rw, status, v)
-	}).Methods("DELETE")
+	})
 }
 
-func addActionRoute(s *service, basePath string, withId bool, r Resource) {
+func addActionRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var actionPath string
 	if withId {
-		actionPath = path.Join(basePath, "{id}", "{action}")
+		actionPath = path.Join(basePath, ":id", ":action")
 	} else {
-		actionPath = path.Join(basePath, "{action}")
+		actionPath = path.Join(basePath, ":action")
 	}
-	s.router.HandleFunc(actionPath, func(rw http.ResponseWriter, req *http.Request) {
-		id, _ := mux.Vars(req)["id"]
-		action, _ := mux.Vars(req)["action"]
-		status, v := r.Action(s, req, id, action)
+	router.POST(actionPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+		vars := httprouter.ContextParams(ctx)
+		var id string
+		if withId {
+			id = vars.ByName("id")
+		}
+		action := vars.ByName("action")
+		status, v := r.Action(ctx, req, id, action)
 		writeResponse(rw, status, v)
-	}).Methods("POST")
+	})
 }
 
 // NotImplementedResource returns HTTP 501 NotImplemented for all HTTP methods.
@@ -163,26 +168,26 @@ func (r *NotImplementedResource) Id(value interface{}) string {
 	return ""
 }
 
-func (r *NotImplementedResource) List(s Service, req *http.Request) (int, interface{}) {
+func (r *NotImplementedResource) List(ctx context.Context, req *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Get(s Service, req *http.Request, id string) (int, interface{}) {
+func (r *NotImplementedResource) Get(ctx context.Context, req *http.Request, id string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Create(s Service, req *http.Request, value interface{}) (int, interface{}) {
+func (r *NotImplementedResource) Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Update(s Service, req *http.Request, id string, value interface{}) (int, interface{}) {
+func (r *NotImplementedResource) Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Delete(s Service, req *http.Request, id string) (int, interface{}) {
+func (r *NotImplementedResource) Delete(ctx context.Context, req *http.Request, id string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Action(s Service, req *http.Request, id, action string) (int, interface{}) {
+func (r *NotImplementedResource) Action(ctx context.Context, req *http.Request, id, action string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }

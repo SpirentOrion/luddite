@@ -5,15 +5,20 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+
+	"golang.org/x/net/context"
 )
 
-// Recovery is middleware handler that recovers from panics and sends a 500 error response containing an optional stack trace.
+// Recovery is middleware that recovers from panics and sends a 500 error response containing an optional stack trace.
 type Recovery struct {
 	Logger        *log.Logger
 	StackAll      bool
 	StackSize     int
 	StacksVisible bool
 }
+
+// Verify that Recovery implements Handler.
+var _ Handler = &Recovery{}
 
 // NewRecovery returns a new Recovery instance.
 func NewRecovery() *Recovery {
@@ -24,7 +29,7 @@ func NewRecovery() *Recovery {
 	}
 }
 
-func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (rec *Recovery) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *http.Request, next ContextHandlerFunc) {
 	defer func() {
 		if err := recover(); err != nil {
 			stack := make([]byte, rec.StackSize)
@@ -42,5 +47,5 @@ func (rec *Recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		}
 	}()
 
-	next(rw, req)
+	next(ctx, rw, req)
 }

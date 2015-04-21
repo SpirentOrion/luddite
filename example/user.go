@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/SpirentOrion/luddite"
+	"golang.org/x/net/context"
 )
 
 type User struct {
@@ -38,7 +39,7 @@ func (r *userResource) Id(value interface{}) string {
 	return u.Name
 }
 
-func (r *userResource) List(s luddite.Service, req *http.Request) (int, interface{}) {
+func (r *userResource) List(ctx context.Context, req *http.Request) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -51,7 +52,7 @@ func (r *userResource) List(s luddite.Service, req *http.Request) (int, interfac
 	return http.StatusOK, us
 }
 
-func (r *userResource) Get(s luddite.Service, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Get(ctx context.Context, req *http.Request, id string) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -62,7 +63,7 @@ func (r *userResource) Get(s luddite.Service, req *http.Request, id string) (int
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Create(s luddite.Service, req *http.Request, value interface{}) (int, interface{}) {
+func (r *userResource) Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
@@ -75,7 +76,7 @@ func (r *userResource) Create(s luddite.Service, req *http.Request, value interf
 	return http.StatusCreated, u.SafeExport()
 }
 
-func (r *userResource) Update(s luddite.Service, req *http.Request, id string, value interface{}) (int, interface{}) {
+func (r *userResource) Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
@@ -88,7 +89,7 @@ func (r *userResource) Update(s luddite.Service, req *http.Request, id string, v
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Delete(s luddite.Service, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Delete(ctx context.Context, req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -96,16 +97,16 @@ func (r *userResource) Delete(s luddite.Service, req *http.Request, id string) (
 	return http.StatusNoContent, nil
 }
 
-func (r *userResource) Action(s luddite.Service, req *http.Request, id string, action string) (int, interface{}) {
+func (r *userResource) Action(ctx context.Context, req *http.Request, id string, action string) (int, interface{}) {
 	switch action {
 	case "reset_password":
-		return r.resetPassword(s, req, id)
+		return r.resetPassword(ctx, req, id)
 	default:
 		return http.StatusNotFound, nil
 	}
 }
 
-func (r *userResource) resetPassword(s luddite.Service, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) resetPassword(ctx context.Context, req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -114,5 +115,5 @@ func (r *userResource) resetPassword(s luddite.Service, req *http.Request, id st
 		return http.StatusNotFound, nil
 	}
 	u.Password = "secret"
-	return http.StatusOK, nil
+	return http.StatusNoContent, nil
 }

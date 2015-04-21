@@ -11,7 +11,7 @@ import (
 var formDecoder = schema.NewDecoder()
 
 func readRequest(req *http.Request, r Resource) (interface{}, error) {
-	switch ct := req.Header.Get("Content-Type"); ct {
+	switch ct := req.Header.Get(HeaderContentType); ct {
 	case "application/x-www-form-urlencoded":
 		if err := req.ParseForm(); err != nil {
 			return nil, NewError(nil, EcodeDeserializationFailed, err)
@@ -52,7 +52,7 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			v = NewError(nil, EcodeInternal, v)
 			break
 		}
-		switch rw.Header().Get("Content-Type") {
+		switch rw.Header().Get(HeaderContentType) {
 		case "application/json":
 			b, err = json.Marshal(v)
 			if err != nil {
