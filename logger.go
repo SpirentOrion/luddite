@@ -5,25 +5,28 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/codegangsta/negroni"
+	"golang.org/x/net/context"
 )
 
-// Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
+// Logger is middleware that logs the request as it goes in and the response as it goes out.
 type Logger struct {
 	*log.Logger
 }
+
+// Verify that Logger implements Handler.
+var _ Handler = &Logger{}
 
 // NewLogger returns a new Logger instance.
 func NewLogger(logger *log.Logger) *Logger {
 	return &Logger{logger}
 }
 
-func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (l *Logger) HandleHTTP(ctx context.Context, rw http.ResponseWriter, r *http.Request, next ContextHandlerFunc) {
 	start := time.Now()
 	l.Printf("Started %s %s", r.Method, r.URL.Path)
 
-	next(rw, r)
+	next(ctx, rw, r)
 
-	res := rw.(negroni.ResponseWriter)
+	res := rw.(ResponseWriter)
 	l.Printf("Completed %s %s -> %v %s in %v", r.Method, r.URL.Path, res.Status(), http.StatusText(res.Status()), time.Since(start))
 }

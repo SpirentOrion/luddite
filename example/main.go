@@ -28,15 +28,17 @@ func main() {
 
 	cfg := Config{}
 	if err := luddite.ReadConfig(cfgFile, &cfg); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	s := luddite.NewService(&cfg.Service)
+	s, err := luddite.NewService(&cfg.Service)
+	if err != nil {
+		panic(err)
+	}
+
 	s.AddCollectionResource("/users", newUserResource())
 
 	if err := s.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		panic(err)
 	}
 }
