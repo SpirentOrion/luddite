@@ -8,11 +8,18 @@ import (
 	"github.com/gorilla/schema"
 )
 
+const (
+	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
+	ContentTypeJson              = "application/json"
+	ContentTypeXml               = "application/xml"
+	ContentTypeHtml              = "text/html"
+)
+
 var formDecoder = schema.NewDecoder()
 
 func readRequest(req *http.Request, r Resource) (interface{}, error) {
 	switch ct := req.Header.Get(HeaderContentType); ct {
-	case "application/x-www-form-urlencoded":
+	case ContentTypeWwwFormUrlencoded:
 		if err := req.ParseForm(); err != nil {
 			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
@@ -21,7 +28,7 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return v, nil
-	case "application/json":
+	case ContentTypeJson:
 		decoder := json.NewDecoder(req.Body)
 		v := r.New()
 		err := decoder.Decode(v)
@@ -29,7 +36,7 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 			return nil, NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return v, nil
-	case "application/xml":
+	case ContentTypeXml:
 		decoder := xml.NewDecoder(req.Body)
 		v := r.New()
 		err := decoder.Decode(v)
@@ -53,7 +60,7 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			break
 		}
 		switch rw.Header().Get(HeaderContentType) {
-		case "application/json":
+		case ContentTypeJson:
 			b, err = json.Marshal(v)
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -64,7 +71,7 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				return
 			}
 			break
-		case "application/xml":
+		case ContentTypeXml:
 			b, err = xml.Marshal(v)
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -73,6 +80,19 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 					rw.Write(b)
 				}
 				return
+			}
+			break
+		case ContentTypeHtml:
+			switch v.(type) {
+			case []byte:
+				b = v.([]byte)
+				break
+			case string:
+				b = []byte(v.(string))
+				break
+			default:
+				rw.WriteHeader(http.StatusNotAcceptable)
+				break
 			}
 			break
 		}

@@ -12,11 +12,11 @@ func TestDefaultContentType(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	rw := httptest.NewRecorder()
 
-	n := NewNegotiator([]string{"application/json", "application/xml"})
+	n := NewNegotiator([]string{ContentTypeJson, ContentTypeXml})
 
 	n.HandleHTTP(context.Background(), rw, req, func(context.Context, http.ResponseWriter, *http.Request) {
-		if rw.Header().Get("Content-Type") != "application/json" {
-			t.Error("default Content-Type not negotiated")
+		if rw.Header().Get(HeaderContentType) != ContentTypeJson {
+			t.Error("default content type not negotiated")
 		}
 	})
 }

@@ -6,6 +6,12 @@ service:
     stacks: true
   log:
     prefix: "[service] "
+  schema:
+    enabled: true
+    uri_path: /schema
+    file_path: /path/to/schema
+    file_pattern: schema.*
+    root_redirect: true
   trace:
     enabled: true
     buffer: 100
@@ -15,3 +21,5 @@ service:
     # DynamoDB-based tracing
     #recorder: dynamodb
     #params: us-west-2:Trace:access_key:secret_key
+  version:
+    max: 1

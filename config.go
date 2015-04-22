@@ -20,15 +20,31 @@ type ServiceConfig struct {
 		// Prefix sets the log prefix string.
 		Prefix string
 	}
-	Trace struct {
-		// Enabled, when true, enables use of the trace package
+	Schema struct {
+		// Enabled, when true, self-serve the service's own schema.
 		Enabled bool
-		// Buffer sets the trace package's buffer size
+		// UriPath sets the URI path for the schema.
+		UriPath string `yaml:"uri_path"`
+		// FilePath sets the base file path for the schema.
+		FilePath string `yaml:"file_path"`
+		// FilePattern sets the schema file glob pattern.
+		FilePattern string `yaml:"file_pattern"`
+		// RootRedirect, when true, redirects the service's root to the default schema.
+		RootRedirect bool `yaml:"root_redirect"`
+	}
+	Trace struct {
+		// Enabled, when true, enables use of the trace package.
+		Enabled bool
+		// Buffer sets the trace package's buffer size.
 		Buffer int
-		// Recorder selects the trace recorder implementation: yaml | dynamodb
+		// Recorder selects the trace recorder implementation: yaml | dynamodb.
 		Recorder string
-		// Params is a colon-separated list of trace recorder constructor parameters
+		// Params is a colon-separated list of trace recorder constructor parameters.
 		Params string
+	}
+	Version struct {
+		// Max sets the maximum API version that the service supports.
+		Max int
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/SpirentOrion/httprouter"
@@ -45,6 +46,7 @@ type service struct {
 	router     *httprouter.Router
 	handlers   []Handler
 	middleware middleware
+	schema     *SchemaHandler
 }
 
 func NewService(config *ServiceConfig) (Service, error) {
@@ -89,7 +91,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 	}
 	s.handlers = append(s.handlers, h)
 
-	h, err = s.newContextHandler()
+	h, err = s.newContextHandler(config.Version.Max)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +99,12 @@ func NewService(config *ServiceConfig) (Service, error) {
 
 	// Build middleware stack
 	s.middleware = buildMiddleware(s.handlers)
+
+	// Install default http handlers
+	if config.Schema.Enabled {
+		s.addSchemaRoutes()
+	}
+
 	return s, nil
 }
 
@@ -190,7 +198,7 @@ func (s *service) newTraceHandler() (Handler, error) {
 			rec, err = dynamorec.New(params[0], params[1], params[2], params[3])
 			break
 		default:
-			err = errors.New(fmt.Sprint("unknown trace recorder: ", s.config.Trace.Recorder))
+			err = fmt.Errorf("unknown trace recorder: ", s.config.Trace.Recorder)
 			break
 		}
 
@@ -217,12 +225,18 @@ func (s *service) newLoggerHandler() (Handler, error) {
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
-	return NewNegotiator([]string{"application/json", "application/xml"}), nil
+	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml}), nil
 }
 
-func (s *service) newContextHandler() (Handler, error) {
+func (s *service) newContextHandler(maxVersion int) (Handler, error) {
+	if maxVersion < 1 {
+		return nil, errors.New("service's maximum API version must be greater than zero")
+	}
+
 	return HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, next ContextHandlerFunc) {
-		next(WithService(ctx, s), rw, r)
+		ctx = WithService(ctx, s)
+		ctx = WithApiVersion(ctx, RequestApiVersion(r, maxVersion))
+		next(ctx, rw, r)
 	}), nil
 }
 
@@ -230,4 +244,25 @@ func (s *service) newRouterHandler() (Handler, error) {
 	return HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, _ ContextHandlerFunc) {
 		s.router.HandleHTTP(ctx, rw, r)
 	}), nil
+}
+
+func (s *service) addSchemaRoutes() {
+	config := s.config
+
+	// Serve the various schemas, e.g. /schema/v1, /schema/v2, etc.
+	s.schema = NewSchemaHandler(config.Schema.FilePath, config.Schema.FilePattern)
+	s.router.GET(path.Join(config.Schema.UriPath, "/v:version"), s.schema.ServeHTTP)
+
+	// Temporarily redirect (307) the base schema path to the default schema, e.g. /schema -> /schema/v2
+	defaultSchemaPath := path.Join(config.Schema.UriPath, fmt.Sprintf("v%d", config.Version.Max))
+	s.router.GET(config.Schema.UriPath, func(_ context.Context, rw http.ResponseWriter, r *http.Request) {
+		http.Redirect(rw, r, defaultSchemaPath, http.StatusTemporaryRedirect)
+	})
+
+	// Optionally permanently redirect (301) the root to the base schema path, e.g. / -> /schema
+	if config.Schema.RootRedirect {
+		s.router.GET("/", func(_ context.Context, rw http.ResponseWriter, r *http.Request) {
+			http.Redirect(rw, r, config.Schema.UriPath, http.StatusMovedPermanently)
+		})
+	}
 }
