@@ -35,7 +35,7 @@ setup:
 
 endif
 
-restore:
+restore: setup
 	cd $(BUILD_PATH) && godep restore
 
 build: setup
