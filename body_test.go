@@ -220,7 +220,7 @@ func TestWriteHtml(t *testing.T) {
 		t.FailNow()
 	}
 
-	if rw.Code != http.StatusNotAcceptable {
+	if rw.Code != http.StatusOK {
 		t.Error("status code never written")
 	}
 }
