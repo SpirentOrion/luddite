@@ -2,7 +2,7 @@ PACKAGE_NAME 	= luddite
 EXAMPLE_DIR	= ./example
 EXAMPLE_BIN	= $(EXAMPLE_DIR)/example
 
-.PHONY: all setup build clean
+.PHONY: all setup restore build rebase clean
 
 all: build
 
@@ -35,16 +35,17 @@ setup:
 
 endif
 
-#
-# Build
-#
+restore:
+	cd $(BUILD_PATH) && godep restore
 
 build: setup
-	(cd $(BUILD_PATH) && \
-	 go get -t ./... && \
-	 go build -a -v ./... && \
-	 go build -a -v -o $(EXAMPLE_BIN) ./example && \
-	 go test ./...)
+	cd $(BUILD_PATH) && \
+	go build -a -v ./... && \
+	go build -a -v -o $(EXAMPLE_BIN) ./example && \
+	go test ./...
+
+rebase:
+	godep update `cat Godeps/Godeps.json | jq -r .Deps[].ImportPath`
 
 clean:
 	rm -f $(EXAMPLE_BIN)

@@ -46,7 +46,7 @@ func (r *sampleResource) Id(value interface{}) string {
 
 func TestReadJson(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleJsonBody))
-	req.Header["Content-Type"] = []string{"application/json"}
+	req.Header[HeaderContentType] = []string{ContentTypeJson}
 
 	v, err := readRequest(req, &sampleResource{})
 	if err != nil {
@@ -82,21 +82,19 @@ func TestWriteJson(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	rw.Header().Add("Content-Type", "application/json")
+	rw.Header().Add(HeaderContentType, ContentTypeJson)
 
-	err := writeResponse(rw, 200, s)
-	if err != nil {
+	if err := writeResponse(rw, http.StatusOK, s); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	if rw.Code != 200 {
+	if rw.Code != http.StatusOK {
 		t.Error("status code never written")
 	}
 
 	if rw.Body != nil {
-		body := string(rw.Body.String())
-		if body != sampleJsonBody {
+		if body := string(rw.Body.String()); body != sampleJsonBody {
 			t.Errorf("JSON serialization failed, got: %s, expected: %s\n", body, sampleJsonBody)
 		}
 	} else {
@@ -106,7 +104,7 @@ func TestWriteJson(t *testing.T) {
 
 func TestReadXml(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleXmlBody))
-	req.Header["Content-Type"] = []string{"application/xml"}
+	req.Header[HeaderContentType] = []string{ContentTypeXml}
 
 	v, err := readRequest(req, &sampleResource{})
 	if err != nil {
@@ -142,24 +140,87 @@ func TestWriteXml(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	rw.Header().Add("Content-Type", "application/xml")
+	rw.Header().Add(HeaderContentType, ContentTypeXml)
 
-	err := writeResponse(rw, 200, s)
-	if err != nil {
+	if err := writeResponse(rw, http.StatusOK, s); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	if rw.Code != 200 {
+	if rw.Code != http.StatusOK {
 		t.Error("status code never written")
 	}
 
 	if rw.Body != nil {
-		body := string(rw.Body.String())
-		if body != sampleXmlBody {
+		if body := string(rw.Body.String()); body != sampleXmlBody {
 			t.Errorf("XML serialization failed, got: %s, expected: %s\n", body, sampleXmlBody)
 		}
 	} else {
 		t.Error("body never written")
+	}
+}
+
+func TestWriteHtml(t *testing.T) {
+	// Write []byte
+	rw := httptest.NewRecorder()
+	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+
+	if err := writeResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if rw.Code != http.StatusOK {
+		t.Error("status code never written")
+	}
+
+	if rw.Body != nil {
+		if body := string(rw.Body.String()); body != sampleData {
+			t.Errorf("HTML body write failed, got: %s, expected: %s\n", body, sampleData)
+		}
+	} else {
+		t.Error("body never written")
+	}
+
+	// Write string
+	rw = httptest.NewRecorder()
+	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+
+	if err := writeResponse(rw, http.StatusOK, sampleData); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if rw.Code != http.StatusOK {
+		t.Error("status code never written")
+	}
+
+	if rw.Body != nil {
+		if body := string(rw.Body.String()); body != sampleData {
+			t.Errorf("HTML body write failed, got: %s, expected: %s\n", body, sampleData)
+		}
+	} else {
+		t.Error("body never written")
+	}
+
+	// Write other type
+	s := &sample{
+		Id:        sampleId,
+		Name:      sampleName,
+		Flag:      true,
+		Data:      []byte(sampleData),
+		Timestamp: sampleTimestamp,
+	}
+
+	rw = httptest.NewRecorder()
+	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+
+	if err := writeResponse(rw, http.StatusOK, s); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if rw.Code != http.StatusNotAcceptable {
+		t.Error("status code never written")
 	}
 }

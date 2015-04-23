@@ -11,7 +11,7 @@ makes it easy to implement services that comply with the
 
 To run the example service:
 
-    $ make
+    $ make restore all
     $ cd example
     $ ./example -c config.yaml
 
