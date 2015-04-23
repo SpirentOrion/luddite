@@ -22,4 +22,5 @@ service:
     #recorder: dynamodb
     #params: us-west-2:Trace:access_key:secret_key
   version:
+    min: 1
     max: 1

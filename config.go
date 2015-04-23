@@ -43,6 +43,8 @@ type ServiceConfig struct {
 		Params string
 	}
 	Version struct {
+		// Min sets the minimum API version that the service supports.
+		Min int
 		// Max sets the maximum API version that the service supports.
 		Max int
 	}

@@ -9,6 +9,7 @@ const (
 	HeaderAccept            = "Accept"
 	HeaderContentType       = "Content-Type"
 	HeaderLocation          = "Location"
+	HeaderRequestId         = "X-Request-Id"
 	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
 )
 

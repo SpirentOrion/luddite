@@ -7,12 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/SpirentOrion/httprouter"
-	"github.com/SpirentOrion/trace"
-	"github.com/SpirentOrion/trace/dynamorec"
-	"github.com/SpirentOrion/trace/yamlrec"
 	"golang.org/x/net/context"
 )
 
@@ -67,23 +63,23 @@ func NewService(config *ServiceConfig) (Service, error) {
 	}
 
 	// Create default middleware handlers
-	h, err := s.newRecoveryHandler()
+	// NB: failures to initialize/configure tracing should not fail the service startup
+	h, err := s.newTraceHandler()
+	if err == nil {
+		s.handlers = append(s.handlers, h)
+	}
+
+	h, err = s.newRecoveryHandler()
 	if err != nil {
 		return nil, err
 	}
 	s.handlers = append(s.handlers, h)
 
-	h, err = s.newTraceHandler()
-	if err != nil {
-		return nil, err
-	}
-	s.handlers = append(s.handlers, h)
-
+	// NB: failures to initialize/configure logging should not fail the service startup
 	h, err = s.newLoggerHandler()
-	if err != nil {
-		return nil, err
+	if err == nil {
+		s.handlers = append(s.handlers, h)
 	}
-	s.handlers = append(s.handlers, h)
 
 	h, err = s.newNegotiatorHandler()
 	if err != nil {
@@ -91,7 +87,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 	}
 	s.handlers = append(s.handlers, h)
 
-	h, err = s.newContextHandler(config.Version.Max)
+	h, err = s.newContextHandler()
 	if err != nil {
 		return nil, err
 	}
@@ -172,53 +168,17 @@ func (s *service) newRecoveryHandler() (Handler, error) {
 }
 
 func (s *service) newTraceHandler() (Handler, error) {
-	if s.config.Trace.Enabled {
-		var (
-			rec trace.Recorder
-			err error
-		)
-
-		params := strings.Split(s.config.Trace.Params, ":")
-		switch s.config.Trace.Recorder {
-		case "yaml":
-			if len(params) != 1 {
-				return nil, errors.New("yaml trace recorder expects 1 parameter (path)")
-			}
-			f, err := os.OpenFile(params[0], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-			if err == nil {
-				rec, err = yamlrec.New(f)
-			} else {
-				f.Close()
-			}
-			break
-		case "dynamodb":
-			if len(params) != 4 {
-				return nil, errors.New("dynamodb trace recorder expects 4 parameters (region:table_name:access_key:secret_key)")
-			}
-			rec, err = dynamorec.New(params[0], params[1], params[2], params[3])
-			break
-		default:
-			err = fmt.Errorf("unknown trace recorder: ", s.config.Trace.Recorder)
-			break
-		}
-
-		if rec != nil {
-			err = trace.Record(rec, s.config.Trace.Buffer, s.logger)
-		}
-
-		if err != nil {
-			s.logger.Println("trace recording is not active:", err)
-		} else {
-			s.logger.Println("recording traces to", rec)
-		}
+	t, err := NewTrace(s.config.Trace.Enabled, s.config.Trace.Buffer, s.config.Trace.Recorder, s.config.Trace.Params, s.logger)
+	if err != nil {
+		s.logger.Println("trace recording is not active:", err)
 	}
 
-	return WrapMiddlewareHandler(trace.ServeHTTP), nil
+	return t, err
 }
 
 func (s *service) newLoggerHandler() (Handler, error) {
 	if !s.config.Debug.Requests {
-		return nil, nil
+		return nil, errors.New("request logging is not active")
 	}
 
 	return NewLogger(s.logger), nil
@@ -228,20 +188,20 @@ func (s *service) newNegotiatorHandler() (Handler, error) {
 	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml}), nil
 }
 
-func (s *service) newContextHandler(maxVersion int) (Handler, error) {
-	if maxVersion < 1 {
+func (s *service) newContextHandler() (Handler, error) {
+	if s.config.Version.Min < 1 {
+		return nil, errors.New("service's minimum API version must be greater than zero")
+	}
+	if s.config.Version.Max < 1 {
 		return nil, errors.New("service's maximum API version must be greater than zero")
 	}
 
-	return HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, next ContextHandlerFunc) {
-		ctx = WithService(ctx, s)
-		ctx = WithApiVersion(ctx, RequestApiVersion(r, maxVersion))
-		next(ctx, rw, r)
-	}), nil
+	return NewContext(s, s.config.Version.Min, s.config.Version.Max), nil
 }
 
 func (s *service) newRouterHandler() (Handler, error) {
 	return HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, _ ContextHandlerFunc) {
+		// No more middleware handlers: further dispatch happens via httprouter
 		s.router.HandleHTTP(ctx, rw, r)
 	}), nil
 }
@@ -259,10 +219,10 @@ func (s *service) addSchemaRoutes() {
 		http.Redirect(rw, r, defaultSchemaPath, http.StatusTemporaryRedirect)
 	})
 
-	// Optionally permanently redirect (301) the root to the base schema path, e.g. / -> /schema
+	// Optionally temporarily redirect (307) the root to the base schema path, e.g. / -> /schema
 	if config.Schema.RootRedirect {
 		s.router.GET("/", func(_ context.Context, rw http.ResponseWriter, r *http.Request) {
-			http.Redirect(rw, r, config.Schema.UriPath, http.StatusMovedPermanently)
+			http.Redirect(rw, r, config.Schema.UriPath, http.StatusTemporaryRedirect)
 		})
 	}
 }
