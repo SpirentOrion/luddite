@@ -91,7 +91,15 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				b = []byte(v.(string))
 				break
 			default:
-				rw.WriteHeader(http.StatusNotAcceptable)
+				b, err = json.Marshal(v)
+				if err != nil {
+					rw.WriteHeader(http.StatusInternalServerError)
+					b, err = json.Marshal(NewError(nil, EcodeSerializationFailed, err))
+					if err != nil {
+						rw.Write(b)
+					}
+					return
+				}
 				break
 			}
 			break

@@ -12,6 +12,8 @@ const (
 	EcodeSerializationFailed   = "SERIALIZATION_FAILED"
 	EcodeDeserializationFailed = "DESERIALIZATION_FAILED"
 	EcodeResourceIdMismatch    = "RESOURCE_ID_MISMATCH"
+	EcodeApiVersionTooOld      = "API_VERSION_TOO_OLD"
+	EcodeApiVersionTooNew      = "API_VERSION_TOO_NEW"
 )
 
 var commonErrorMap = map[string]string{
@@ -21,6 +23,8 @@ var commonErrorMap = map[string]string{
 	EcodeSerializationFailed:   "Serialization failed: %s",
 	EcodeDeserializationFailed: "Deserialization failed: %s",
 	EcodeResourceIdMismatch:    "Resource identifier in URL doesn't match value in body",
+	EcodeApiVersionTooOld:      "The minimum supported API version number is %d",
+	EcodeApiVersionTooNew:      "The maximum supported API version number is %d",
 }
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
