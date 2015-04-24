@@ -15,7 +15,7 @@
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/trace",
-			"Rev": "0038372c56a812e30917c3f14793f1ce38453689"
+			"Rev": "e7ed95f83046acb20583e1167e828970fe868e35"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",

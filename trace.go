@@ -117,10 +117,9 @@ func (t *Trace) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *htt
 
 			// Annotate the trace with additional response data
 			res := rw.(ResponseWriter)
-			s.Data = map[string]interface{}{
-				"resp_status": res.Status(),
-				"resp_size":   res.Size(),
-			}
+			data := s.Data()
+			data["resp_status"] = res.Status()
+			data["resp_size"] = res.Size()
 		})
 	} else {
 		// Invoke the next handler
