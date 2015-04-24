@@ -1,11 +1,8 @@
 package datastores
 
-import (
-	"errors"
-	"strings"
-)
+import "errors"
 
-// DynamoParams holds connection and auth properties for
+// DynamoParams holds AWS connection and auth properties for
 // DynamoDB-based datastores.
 type DynamoParams struct {
 	Region    string
@@ -14,17 +11,22 @@ type DynamoParams struct {
 	SecretKey string
 }
 
-// ParseDynamoParams parses a parameter string for the DynamoDB
-// datastore provider and returns a DynamoParams structure.
-func ParseDynamoParams(s string) (*DynamoParams, error) {
-	params := strings.Split(s, ":")
-	if len(params) != 4 {
-		return nil, errors.New("DynamoDB provider params have 4 parameters (region:table_name:access_key:secret_key)")
+// GetDynamoParams extracts DynamoDB provider parameters from a
+// generic string map and returns a DynamoParams structure.
+func GetDynamoParams(params map[string]string) (*DynamoParams, error) {
+	p := &DynamoParams{
+		Region:    params["region"],
+		TableName: params["table_name"],
+		AccessKey: params["access_key"],
+		SecretKey: params["secret_key"],
 	}
-	return &DynamoParams{
-		Region:    params[0],
-		TableName: params[1],
-		AccessKey: params[2],
-		SecretKey: params[3],
-	}, nil
+
+	if p.Region == "" {
+		return nil, errors.New("DynamoDB providers require a 'region' parameter")
+	}
+	if p.TableName == "" {
+		return nil, errors.New("DynamoDB providers require a 'table_name' parameter")
+	}
+
+	return p, nil
 }
