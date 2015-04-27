@@ -1,4 +1,4 @@
-package datastores
+package datastore
 
 const (
 	DYNAMODB_PROVIDER = "dynamodb"

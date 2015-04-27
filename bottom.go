@@ -7,7 +7,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/SpirentOrion/luddite/datastores"
+	"github.com/SpirentOrion/luddite/datastore"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
@@ -45,8 +45,8 @@ func NewBottom(config *ServiceConfig, logger *log.Logger) *Bottom {
 		)
 		switch config.Trace.Recorder {
 		case "yaml":
-			var p *datastores.YAMLParams
-			p, err = datastores.GetYAMLParams(config.Trace.Params)
+			var p *datastore.YAMLParams
+			p, err = datastore.GetYAMLParams(config.Trace.Params)
 			if err != nil {
 				break
 			}
@@ -62,8 +62,8 @@ func NewBottom(config *ServiceConfig, logger *log.Logger) *Bottom {
 			}
 			break
 		case "dynamodb":
-			var p *datastores.DynamoParams
-			p, err = datastores.GetDynamoParams(config.Trace.Params)
+			var p *datastore.DynamoParams
+			p, err = datastore.GetDynamoParams(config.Trace.Params)
 			if err != nil {
 				break
 			}
