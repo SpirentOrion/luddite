@@ -1,4 +1,4 @@
-package datastores
+package datastore
 
 const (
 	DYNAMODB_PROVIDER = "dynamodb"
@@ -7,5 +7,5 @@ const (
 // Config holds per-datastore configuration properties.
 type Config struct {
 	Provider string
-	Params   string
+	Params   map[string]string
 }

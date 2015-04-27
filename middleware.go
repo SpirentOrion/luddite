@@ -11,26 +11,23 @@ type middleware struct {
 	next    *middleware
 }
 
-// Verify that middleware implements http.Handler.
-var _ http.Handler = middleware{}
-
-func (m middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	m.handler.HandleHTTP(context.Background(), NewResponseWriter(rw), r, m.next.dispatchHandler)
 }
 
-func (m middleware) dispatchHandler(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
+func (m *middleware) dispatchHandler(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	m.handler.HandleHTTP(ctx, rw, r, m.next.dispatchHandler)
 }
 
-func voidMiddleware() middleware {
-	return middleware{
+func voidMiddleware() *middleware {
+	return &middleware{
 		handler: HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, next ContextHandlerFunc) {}),
 		next:    &middleware{},
 	}
 }
 
-func buildMiddleware(handlers []Handler) middleware {
-	var next middleware
+func buildMiddleware(handlers []Handler) *middleware {
+	var next *middleware
 
 	if len(handlers) == 0 {
 		return voidMiddleware()
@@ -40,5 +37,5 @@ func buildMiddleware(handlers []Handler) middleware {
 		next = voidMiddleware()
 	}
 
-	return middleware{handlers[0], &next}
+	return &middleware{handlers[0], next}
 }

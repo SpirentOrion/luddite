@@ -15,6 +15,8 @@ type ServiceConfig struct {
 		Requests bool
 		// Stacks, when true, causes stack traces to appear in 500 error responses.
 		Stacks bool
+		// StackSize sets an upper limit on the length of stack traces that appear in 500 error responses.
+		StackSize int `yaml:"stack_size"`
 	}
 	Log struct {
 		// Prefix sets the log prefix string.
@@ -33,14 +35,14 @@ type ServiceConfig struct {
 		RootRedirect bool `yaml:"root_redirect"`
 	}
 	Trace struct {
-		// Enabled, when true, enables use of the trace package.
+		// Enabled, when true, enables trace recording.
 		Enabled bool
 		// Buffer sets the trace package's buffer size.
 		Buffer int
 		// Recorder selects the trace recorder implementation: yaml | dynamodb.
 		Recorder string
-		// Params is a colon-separated list of trace recorder constructor parameters.
-		Params string
+		// Params is a map of trace recorder parameters.
+		Params map[string]string
 	}
 	Version struct {
 		// Min sets the minimum API version that the service supports.

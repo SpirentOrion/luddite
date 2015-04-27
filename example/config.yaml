@@ -4,6 +4,7 @@ service:
   debug:
     requests: true
     stacks: true
+    stack_size: 8192
   log:
     prefix: "[service] "
   schema:
@@ -15,12 +16,9 @@ service:
   trace:
     enabled: true
     buffer: 100
-    # YAML-based tracing
     recorder: yaml
-    params: trace.yaml
-    # DynamoDB-based tracing
-    #recorder: dynamodb
-    #params: us-west-2:Trace:access_key:secret_key
+    params:
+      path: trace.yaml
   version:
     min: 1
     max: 1

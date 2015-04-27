@@ -41,7 +41,7 @@ type service struct {
 	logger     *log.Logger
 	router     *httprouter.Router
 	handlers   []Handler
-	middleware middleware
+	middleware *middleware
 	schema     *SchemaHandler
 }
 
@@ -64,22 +64,11 @@ func NewService(config *ServiceConfig) (Service, error) {
 
 	// Create default middleware handlers
 	// NB: failures to initialize/configure tracing should not fail the service startup
-	h, err := s.newTraceHandler()
-	if err == nil {
-		s.handlers = append(s.handlers, h)
-	}
-
-	h, err = s.newRecoveryHandler()
+	h, err := s.newBottomHandler()
 	if err != nil {
 		return nil, err
 	}
 	s.handlers = append(s.handlers, h)
-
-	// NB: failures to initialize/configure logging should not fail the service startup
-	h, err = s.newLoggerHandler()
-	if err == nil {
-		s.handlers = append(s.handlers, h)
-	}
 
 	h, err = s.newNegotiatorHandler()
 	if err != nil {
@@ -160,28 +149,8 @@ func (s *service) Run() error {
 	return http.ListenAndServe(s.config.Addr, s.middleware)
 }
 
-func (s *service) newRecoveryHandler() (Handler, error) {
-	h := NewRecovery()
-	h.Logger = s.logger
-	h.StacksVisible = s.config.Debug.Stacks
-	return h, nil
-}
-
-func (s *service) newTraceHandler() (Handler, error) {
-	t, err := NewTrace(s.config.Trace.Enabled, s.config.Trace.Buffer, s.config.Trace.Recorder, s.config.Trace.Params, s.logger)
-	if err != nil {
-		s.logger.Println("trace recording is not active:", err)
-	}
-
-	return t, err
-}
-
-func (s *service) newLoggerHandler() (Handler, error) {
-	if !s.config.Debug.Requests {
-		return nil, errors.New("request logging is not active")
-	}
-
-	return NewLogger(s.logger), nil
+func (s *service) newBottomHandler() (Handler, error) {
+	return NewBottom(s.config, s.logger), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
