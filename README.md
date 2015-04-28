@@ -31,15 +31,18 @@ substantial flexibility.
 Currently, the framework registers several middleware handlers for
 each service:
 
-* Recovery: recovers from panics that occur in HTTP method handlers
-  and optionally includes stack traces in 500 responses
-* Trace: generates a unique request id and optionally records traces
-  to a persistent backend
-* Logging: optionally logs requests and responses
-* Negotiation: performs JSON (default) and XML content negotiation
-  based on HTTP requests' `Accept` headers
-* Context: makes the `Service` instance available to resource handlers
-  as part of their dispatch [context][context]
+* Bottom: Combines tracing, logging and recovery actions. Tracing
+  generates a unique request id and optionally records traces to a
+  persistent backend.  Logging logs requests/responses in an
+  Apache-style log format.  Recovery handles panics that occur in HTTP
+  method handlers and optionally includes stack traces in 500
+  responses.
+* Negotiation: Performs JSON (default) and XML content negotiation
+  based on HTTP requests' `Accept` headers.
+* Context: Performs API version selection and enforces the service's
+  min/max supported version constraints.  Makes the `Service` instance
+  and selected API version available to resource handlers as part of
+  their dispatch [context][context].
 
 [context]: http://blog.golang.org/context
 

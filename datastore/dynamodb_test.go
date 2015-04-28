@@ -2,7 +2,7 @@ package datastore
 
 import "testing"
 
-func TestGetDynamoParams(t *testing.T) {
+func TestNewDynamoParams(t *testing.T) {
 	params := map[string]string{
 		"region":     "a",
 		"table_name": "b",
@@ -10,7 +10,7 @@ func TestGetDynamoParams(t *testing.T) {
 		"secret_key": "d",
 	}
 
-	p, err := GetDynamoParams(params)
+	p, err := NewDynamoParams(params)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -31,14 +31,14 @@ func TestGetDynamoParams(t *testing.T) {
 
 	delete(params, "access_key")
 	delete(params, "secret_key")
-	_, err = GetDynamoParams(params)
+	_, err = NewDynamoParams(params)
 	if err != nil {
 		t.Error("unexpected error for missing access_key and secret_key: %s", err)
 	}
 
 	delete(params, "region")
 	delete(params, "table_name")
-	_, err = GetDynamoParams(params)
+	_, err = NewDynamoParams(params)
 	if err == nil {
 		t.Error("expected error for missing region and table_name")
 	}
