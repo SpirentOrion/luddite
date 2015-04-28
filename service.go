@@ -30,6 +30,9 @@ type Service interface {
 	// Logger returns the service's log.Logger instance.
 	Logger() *log.Logger
 
+	// Router returns the services' httprouter.Router instance.
+	Router() *httprouter.Router
+
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
 	// passed to NewService.
@@ -134,6 +137,10 @@ func (s *service) AddCollectionResource(basePath string, r Resource) {
 
 func (s *service) Logger() *log.Logger {
 	return s.logger
+}
+
+func (s *service) Router() *httprouter.Router {
+	return s.router
 }
 
 func (s *service) Run() error {
