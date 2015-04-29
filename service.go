@@ -7,9 +7,17 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/SpirentOrion/httprouter"
+	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
+)
+
+const (
+	DEFAULT_STATSD_SERVER   = "127.0.0.1:8125"
+	DEFAULT_STATSD_PREFIX   = "%HOST%."
+	DEFAULT_STATSD_INTERVAL = 2 * time.Second
 )
 
 // Service is an interface that implements a standalone RESTful web service.
@@ -27,11 +35,17 @@ type Service interface {
 	// (supporting GET, POST, PUT, and DELETE methods).
 	AddCollectionResource(basePath string, r Resource)
 
+	// Config returns the service's ServiceConfig instance.
+	Config() *ServiceConfig
+
 	// Logger returns the service's log.Logger instance.
 	Logger() *log.Logger
 
-	// Router returns the services' httprouter.Router instance.
+	// Router returns the service's httprouter.Router instance.
 	Router() *httprouter.Router
+
+	// Stats returns the service's statsd.StatsBuffer instance.
+	Stats() *statsd.StatsdBuffer
 
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
@@ -40,21 +54,25 @@ type Service interface {
 }
 
 type service struct {
-	config     *ServiceConfig
-	logger     *log.Logger
-	router     *httprouter.Router
-	handlers   []Handler
-	middleware *middleware
-	schema     *SchemaHandler
+	config       *ServiceConfig
+	logger       *log.Logger
+	router       *httprouter.Router
+	statsdClient *statsd.StatsdClient
+	stats        *statsd.StatsdBuffer
+	handlers     []Handler
+	middleware   *middleware
+	schema       *SchemaHandler
 }
+
+// Verify that service implements Service.
+var _ Service = &service{}
 
 func NewService(config *ServiceConfig) (Service, error) {
 	// Create service
 	s := &service{
-		config:   config,
-		logger:   log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
-		router:   httprouter.New(),
-		handlers: []Handler{},
+		config: config,
+		logger: log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
+		router: httprouter.New(),
 	}
 
 	s.router.NotFound = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
@@ -65,27 +83,42 @@ func NewService(config *ServiceConfig) (Service, error) {
 		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
 
+	// Create the statsd client
+	if s.config.Metrics.Enabled {
+		if s.config.Metrics.Server == "" {
+			s.config.Metrics.Server = DEFAULT_STATSD_SERVER
+		}
+		if s.config.Metrics.Prefix == "" {
+			s.config.Metrics.Prefix = DEFAULT_STATSD_PREFIX
+		}
+		if s.config.Metrics.Interval == 0 {
+			s.config.Metrics.Interval = DEFAULT_STATSD_INTERVAL
+		}
+
+		s.statsdClient = statsd.NewStatsdClient(s.config.Metrics.Server, s.config.Metrics.Prefix)
+		s.stats = statsd.NewStatsdBuffer(s.config.Metrics.Interval, s.statsdClient)
+		s.stats.Logger = s.logger
+	}
+
 	// Create default middleware handlers
 	// NB: failures to initialize/configure tracing should not fail the service startup
-	h, err := s.newBottomHandler()
+	bottom, err := s.newBottomHandler()
 	if err != nil {
 		return nil, err
 	}
-	s.handlers = append(s.handlers, h)
 
-	h, err = s.newNegotiatorHandler()
+	negotiator, err := s.newNegotiatorHandler()
 	if err != nil {
 		return nil, err
 	}
-	s.handlers = append(s.handlers, h)
 
-	h, err = s.newContextHandler()
+	context, err := s.newContextHandler()
 	if err != nil {
 		return nil, err
 	}
-	s.handlers = append(s.handlers, h)
 
 	// Build middleware stack
+	s.handlers = []Handler{bottom, negotiator, context}
 	s.middleware = buildMiddleware(s.handlers)
 
 	// Install default http handlers
@@ -135,12 +168,20 @@ func (s *service) AddCollectionResource(basePath string, r Resource) {
 	addActionRoute(s.router, basePath, true, r)
 }
 
+func (s *service) Config() *ServiceConfig {
+	return s.config
+}
+
 func (s *service) Logger() *log.Logger {
 	return s.logger
 }
 
 func (s *service) Router() *httprouter.Router {
 	return s.router
+}
+
+func (s *service) Stats() *statsd.StatsdBuffer {
+	return s.stats
 }
 
 func (s *service) Run() error {
@@ -151,13 +192,23 @@ func (s *service) Run() error {
 	}
 	s.AddHandler(h)
 
-	// Serve
-	s.logger.Printf("listening on %s", s.config.Addr)
-	return http.ListenAndServe(s.config.Addr, s.middleware)
+	// Arrange for shutdown of the buffered statsd client
+	if s.stats != nil {
+		defer s.stats.Close()
+	}
+
+	// Serve HTTP or HTTPS, depending on config
+	if s.config.Transport.TLS {
+		s.logger.Printf("HTTPS listening on %s", s.config.Addr)
+		return http.ListenAndServeTLS(s.config.Addr, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath, s.middleware)
+	} else {
+		s.logger.Printf("HTTP listening on %s", s.config.Addr)
+		return http.ListenAndServe(s.config.Addr, s.middleware)
+	}
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
-	return NewBottom(s.config, s.logger), nil
+	return NewBottom(s.config, s.logger, s.stats), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {

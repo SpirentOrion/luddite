@@ -47,9 +47,6 @@ type Context struct {
 	maxVersion int
 }
 
-// Verify that Context implements Handler.
-var _ Handler = &Context{}
-
 // NewContext returns a new Context instance.
 func NewContext(s Service, minVersion, maxVersion int) *Context {
 	return &Context{s, minVersion, maxVersion}

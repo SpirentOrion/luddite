@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/SpirentOrion/luddite/datastore"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
+	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
 )
 
@@ -18,16 +20,18 @@ const MAX_STACK_SIZE = 8 * 1024
 
 // Bottom is middleware that logs the request as it goes in and the response as it goes out.
 type Bottom struct {
-	*log.Logger
+	logger        *log.Logger
+	stats         *statsd.StatsdBuffer
 	logRequests   bool
 	respStacks    bool
 	respStackSize int
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, logger *log.Logger) *Bottom {
+func NewBottom(config *ServiceConfig, logger *log.Logger, stats *statsd.StatsdBuffer) *Bottom {
 	b := &Bottom{
-		Logger:        logger,
+		logger:        logger,
+		stats:         stats,
 		logRequests:   config.Debug.Requests,
 		respStacks:    config.Debug.Stacks,
 		respStackSize: config.Debug.StackSize,
@@ -92,35 +96,34 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	// Don't allow panics to escape the bottom handler under any circumstances!
 	defer func() {
 		if rcv := recover(); rcv != nil {
-			if b.Logger != nil {
+			if b.logger != nil {
 				stack := make([]byte, MAX_STACK_SIZE)
 				stack = stack[:runtime.Stack(stack, false)]
-				b.Printf("PANIC: %s\n%s", rcv, stack)
+				b.logger.Printf("PANIC: %s\n%s", rcv, stack)
 			}
 		}
 	}()
 
 	// For now, always honor incoming id headers. If present, header must be in the form "traceId:parentId"
-	traceId, parentId := getRequestTraceIds(req)
+	traceId, parentId := b.getRequestTraceIds(req)
 
 	// Start a new trace, either using an existing id (from the request header) or a new one
 	s, _ := trace.New(traceId, TraceKindRequest, req.URL.Path)
 	if s != nil {
-		addRequestResponseTraceIds(rw, req, traceId, s.SpanId)
+		b.addRequestResponseTraceIds(rw, req, traceId, s.SpanId)
 		s.ParentId = parentId
 	}
 
+	res := rw.(ResponseWriter)
 	trace.Run(s, func() {
-		res := rw.(ResponseWriter)
-
 		// If a panic occurs in a downstream handler, log it, generate a 500 error
 		// response, and annotate the trace with additional panic-related info
 		defer func() {
 			if rcv := recover(); rcv != nil {
 				stack := make([]byte, MAX_STACK_SIZE)
 				stack = stack[:runtime.Stack(stack, false)]
-				if b.Logger != nil {
-					b.Printf("PANIC: %s\n%s", rcv, stack)
+				if b.logger != nil {
+					b.logger.Printf("PANIC: %s\n%s", rcv, stack)
 				}
 
 				resp := NewError(nil, EcodeInternal, rcv)
@@ -132,8 +135,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					}
 				}
 				writeResponse(rw, http.StatusInternalServerError, resp)
-				if b.Logger != nil {
-					b.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
+				if b.logger != nil {
+					b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
 						req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
 						res.Status(), res.Size(), req.Referer(), req.UserAgent())
 				}
@@ -150,8 +153,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 
 		// Invoke the next handler
 		next(ctx, rw, req)
-		if b.Logger != nil {
-			b.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
+		if b.logger != nil {
+			b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
 				req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
 				res.Status(), res.Size(), req.Referer(), req.UserAgent())
 		}
@@ -164,9 +167,14 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			data["resp_size"] = res.Size()
 		}
 	})
+
+	// Update request/response metrics
+	if b.stats != nil {
+		b.updateRequestResponseStats(res, req)
+	}
 }
 
-func getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
+func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
 	if hdr := req.Header.Get(HeaderRequestId); hdr != "" {
 		n, _ := fmt.Sscanf(hdr, "%d:%d", &traceId, &parentId)
 		if n < 2 || traceId < 1 || parentId < 1 {
@@ -177,7 +185,16 @@ func getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
 	return
 }
 
-func addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId, parentId int64) {
+func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId, parentId int64) {
 	req.Header.Set(HeaderRequestId, fmt.Sprintf("%d:%d", traceId, parentId))
 	rw.Header().Set(HeaderRequestId, fmt.Sprintf("%d", traceId))
+}
+
+func (b *Bottom) updateRequestResponseStats(res ResponseWriter, req *http.Request) {
+	stat := fmt.Sprintf("request.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
+	fmt.Println(stat)
+	b.stats.Incr(stat, 1)
+	stat = fmt.Sprintf("response.http.%s%s.%d", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1), res.Status())
+	fmt.Println(stat)
+	b.stats.Incr(stat, 1)
 }

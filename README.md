@@ -31,12 +31,13 @@ substantial flexibility.
 Currently, the framework registers several middleware handlers for
 each service:
 
-* Bottom: Combines tracing, logging and recovery actions. Tracing
-  generates a unique request id and optionally records traces to a
-  persistent backend.  Logging logs requests/responses in an
-  Apache-style log format.  Recovery handles panics that occur in HTTP
-  method handlers and optionally includes stack traces in 500
-  responses.
+* Bottom: Combines tracing, logging, metrics, and recovery
+  actions. Tracing generates a unique request id and optionally
+  records traces to a persistent backend.  Logging logs
+  requests/responses in an Apache-style log format.  Metrics
+  increments basic request/response stats.  Recovery handles panics
+  that occur in HTTP method handlers and optionally includes stack
+  traces in 500 responses.
 * Negotiation: Performs JSON (default) and XML content negotiation
   based on HTTP requests' `Accept` headers.
 * Context: Performs API version selection and enforces the service's
@@ -46,8 +47,10 @@ each service:
 
 [context]: http://blog.golang.org/context
 
-# TODO
+## TODO
 
-* Additional middleware handlers
-  * JWT decode and validation
-  * Request metrics / statsd integration
+Need to document these:
+* Metrics
+* Schema file serving
+* TLS requirements
+* Min/max versioning

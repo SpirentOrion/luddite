@@ -7,6 +7,11 @@ service:
     stack_size: 8192
   log:
     prefix: "[service] "
+  metrics:
+    enabled: true
+    server: 127.0.0.1:8125
+    prefix: service.
+    interval: 2s
   schema:
     enabled: true
     uri_path: /schema
@@ -19,6 +24,10 @@ service:
     recorder: yaml
     params:
       path: trace.yaml
+  transport:
+    tls: false
+    cert_file_path:
+    key_file_path:
   version:
     min: 1
     max: 1
