@@ -2,6 +2,7 @@ package luddite
 
 import (
 	"io/ioutil"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -21,6 +22,16 @@ type ServiceConfig struct {
 	Log struct {
 		// Prefix sets the log prefix string.
 		Prefix string
+	}
+	Metrics struct {
+		// Enabled, when true, enables the service's statsd client.
+		Enabled bool
+		// Server is the address:port of the statsd server. Defaults to "127.0.0.1:8125".
+		Server string
+		// Prefix sets the statsd client prefix. Defaults to "%HOST%.".
+		Prefix string
+		// Interval sets the statsd client flush interface. Defaults to 2s.
+		Interval time.Duration
 	}
 	Schema struct {
 		// Enabled, when true, self-serve the service's own schema.
@@ -43,6 +54,14 @@ type ServiceConfig struct {
 		Recorder string
 		// Params is a map of trace recorder parameters.
 		Params map[string]string
+	}
+	Transport struct {
+		// Tls, causes the service to listen using HTTPS.
+		TLS bool `yaml:"tls"`
+		// CertFilePath sets the path to the server's certificate file.
+		CertFilePath string `yaml:"cert_file_path"`
+		// KeyFilePath sets the path to the server's key file.
+		KeyFilePath string `yaml:"key_file_path"`
 	}
 	Version struct {
 		// Min sets the minimum API version that the service supports.

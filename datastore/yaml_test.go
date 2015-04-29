@@ -2,10 +2,10 @@ package datastore
 
 import "testing"
 
-func TestGetYAMLParams(t *testing.T) {
+func TestNewYAMLParams(t *testing.T) {
 	params := map[string]string{"path": "a"}
 
-	p, err := GetYAMLParams(params)
+	p, err := NewYAMLParams(params)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -17,7 +17,7 @@ func TestGetYAMLParams(t *testing.T) {
 
 	delete(params, "path")
 
-	_, err = GetYAMLParams(params)
+	_, err = NewYAMLParams(params)
 	if err == nil {
 		t.Error("expected error for missing path")
 	}

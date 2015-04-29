@@ -12,9 +12,6 @@ type FormatNegotiator struct {
 	acceptedFormats []string
 }
 
-// Verify that FormatNegotiator implements Handler.
-var _ Handler = &FormatNegotiator{}
-
 // RegisterFormat registers a new format and associated MIME types.
 func RegisterFormat(format string, mimeTypes []string) {
 	negotiation.RegisterFormat(format, mimeTypes)
