@@ -108,10 +108,15 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	traceId, parentId := b.getRequestTraceIds(req)
 
 	// Start a new trace, either using an existing id (from the request header) or a new one
+	if traceId == 0 {
+		traceId, _ = trace.GenerateId()
+	}
 	s, _ := trace.New(traceId, TraceKindRequest, req.URL.Path)
 	if s != nil {
 		b.addRequestResponseTraceIds(rw, req, traceId, s.SpanId)
 		s.ParentId = parentId
+	} else {
+		b.addResponseTraceId(rw, traceId)
 	}
 
 	res := rw.(ResponseWriter)
@@ -144,7 +149,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 				if s != nil {
 					data := s.Data()
 					data["panic"] = rcv
-					data["stack"] = stack
+					data["stack"] = string(stack)
 					data["resp_status"] = res.Status()
 					data["resp_size"] = res.Size()
 				}
@@ -187,14 +192,16 @@ func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64)
 
 func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId, parentId int64) {
 	req.Header.Set(HeaderRequestId, fmt.Sprintf("%d:%d", traceId, parentId))
-	rw.Header().Set(HeaderRequestId, fmt.Sprintf("%d", traceId))
+	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
+}
+
+func (b *Bottom) addResponseTraceId(rw http.ResponseWriter, traceId int64) {
+	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
 }
 
 func (b *Bottom) updateRequestResponseStats(res ResponseWriter, req *http.Request) {
 	stat := fmt.Sprintf("request.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
-	fmt.Println(stat)
 	b.stats.Incr(stat, 1)
 	stat = fmt.Sprintf("response.http.%s%s.%d", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1), res.Status())
-	fmt.Println(stat)
 	b.stats.Incr(stat, 1)
 }
