@@ -8,7 +8,7 @@ service:
   log:
     prefix: "[service] "
   metrics:
-    enabled: true
+    enabled: false
     server: 127.0.0.1:8125
     prefix: service.
     interval: 2s
