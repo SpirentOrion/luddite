@@ -20,6 +20,10 @@ const (
 	DEFAULT_STATSD_INTERVAL = 2 * time.Second
 )
 
+var (
+	nullStats = &NullStats{}
+)
+
 // Service is an interface that implements a standalone RESTful web service.
 type Service interface {
 	// AddHandler adds a context-aware middleware handler to the
@@ -44,8 +48,8 @@ type Service interface {
 	// Router returns the service's httprouter.Router instance.
 	Router() *httprouter.Router
 
-	// Stats returns the service's statsd.StatsBuffer instance.
-	Stats() *statsd.StatsdBuffer
+	// Stats returns the service's Stats instance.
+	Stats() Stats
 
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
@@ -180,8 +184,12 @@ func (s *service) Router() *httprouter.Router {
 	return s.router
 }
 
-func (s *service) Stats() *statsd.StatsdBuffer {
-	return s.stats
+func (s *service) Stats() Stats {
+	if s.stats != nil {
+		return s.stats
+	} else {
+		return nullStats
+	}
 }
 
 func (s *service) Run() error {
@@ -208,7 +216,7 @@ func (s *service) Run() error {
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
-	return NewBottom(s.config, s.logger, s.stats), nil
+	return NewBottom(s.config, s.logger, s.Stats()), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {

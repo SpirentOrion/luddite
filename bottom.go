@@ -12,7 +12,6 @@ import (
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
-	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
 )
 
@@ -21,14 +20,14 @@ const MAX_STACK_SIZE = 8 * 1024
 // Bottom is middleware that logs the request as it goes in and the response as it goes out.
 type Bottom struct {
 	logger        *log.Logger
-	stats         *statsd.StatsdBuffer
+	stats         Stats
 	logRequests   bool
 	respStacks    bool
 	respStackSize int
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, logger *log.Logger, stats *statsd.StatsdBuffer) *Bottom {
+func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
 	b := &Bottom{
 		logger:        logger,
 		stats:         stats,
@@ -174,9 +173,10 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	})
 
 	// Update request/response metrics
-	if b.stats != nil {
-		b.updateRequestResponseStats(res, req)
-	}
+	stat := fmt.Sprintf("request.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
+	b.stats.Incr(stat, 1)
+	stat = fmt.Sprintf("response.http.%s%s.%d", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1), res.Status())
+	b.stats.Incr(stat, 1)
 }
 
 func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
@@ -197,11 +197,4 @@ func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Re
 
 func (b *Bottom) addResponseTraceId(rw http.ResponseWriter, traceId int64) {
 	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
-}
-
-func (b *Bottom) updateRequestResponseStats(res ResponseWriter, req *http.Request) {
-	stat := fmt.Sprintf("request.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
-	b.stats.Incr(stat, 1)
-	stat = fmt.Sprintf("response.http.%s%s.%d", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1), res.Status())
-	b.stats.Incr(stat, 1)
 }
