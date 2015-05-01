@@ -1,6 +1,7 @@
 package luddite
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
@@ -100,6 +101,9 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 					}
 					return
 				}
+				esc := new(bytes.Buffer)
+				json.HTMLEscape(esc, b)
+				b = esc.Bytes()
 				break
 			}
 			break

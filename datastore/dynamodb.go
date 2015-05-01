@@ -60,28 +60,6 @@ func (t *DynamoTable) String() string {
 	return fmt.Sprintf("%s{%s:%s}", DYNAMODB_PROVIDER, t.Server.Region.Name, t.Name)
 }
 
-func (t *DynamoTable) Scan() (attrs []map[string]*dynamodb.Attribute, err error) {
-	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
-	trace.Run(s, func() {
-		attrs, err = t.Table.Scan([]dynamodb.AttributeComparison{})
-		if s != nil {
-			data := s.Data()
-			data["op"] = "Scan"
-			if err != nil {
-				data["error"] = err
-			} else {
-				data["items"] = len(attrs)
-			}
-		}
-	})
-
-	if err != nil {
-		attrs = nil
-		return
-	}
-	return
-}
-
 func (t *DynamoTable) GetItem(id string) (attrs map[string]*dynamodb.Attribute, ok bool, err error) {
 	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
 	trace.Run(s, func() {
@@ -119,7 +97,6 @@ func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute) (err error)
 			}
 		}
 	})
-
 	return
 }
 
@@ -141,7 +118,6 @@ func (t *DynamoTable) UpdateItem(id string, serial int64, attrs []dynamodb.Attri
 			}
 		}
 	})
-
 	return
 }
 
@@ -167,5 +143,45 @@ func (t *DynamoTable) DeleteItem(id string) (ok bool, err error) {
 	} else {
 		ok = true
 	}
+	return
+}
+
+func (t *DynamoTable) Scan(comps []dynamodb.AttributeComparison) (attrs []map[string]*dynamodb.Attribute, err error) {
+	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
+	trace.Run(s, func() {
+		attrs, err = t.Table.Scan(comps)
+		if s != nil {
+			data := s.Data()
+			data["op"] = "Scan"
+			if err != nil {
+				data["error"] = err
+			} else {
+				data["items"] = len(attrs)
+			}
+		}
+	})
+
+	if err != nil {
+		attrs = nil
+		return
+	}
+	return
+}
+
+func (t *DynamoTable) QueryOnIndex(comps []dynamodb.AttributeComparison, indexName string) (attrs []map[string]*dynamodb.Attribute, err error) {
+	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
+	trace.Run(s, func() {
+		attrs, err = t.Table.QueryOnIndex(comps, indexName)
+		if s != nil {
+			data := s.Data()
+			data["op"] = "QueryOnIndex"
+			data["index"] = indexName
+			if err != nil {
+				data["error"] = err
+			} else {
+				data["items"] = len(attrs)
+			}
+		}
+	})
 	return
 }

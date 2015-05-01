@@ -27,6 +27,17 @@ func ContextService(ctx context.Context) Service {
 	return s
 }
 
+// ContextStats returns the Service's stats instance value from a
+// context.Context, if possible.
+func ContextStats(ctx context.Context) (stats Stats) {
+	if s, _ := ctx.Value(contextServiceKey).(Service); s != nil {
+		stats = s.Stats()
+	} else {
+		stats = nullStats
+	}
+	return
+}
+
 // WithApiVersion returns a new context.Context instance with the current HTTP request's
 // API version header included as a value.
 func WithApiVersion(ctx context.Context, version int) context.Context {
