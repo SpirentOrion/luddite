@@ -47,7 +47,7 @@ func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
 			err error
 		)
 		switch config.Trace.Recorder {
-		case "yaml":
+		case datastore.YAML_PROVIDER:
 			var p *datastore.YAMLParams
 			p, err = datastore.NewYAMLParams(config.Trace.Params)
 			if err != nil {
@@ -64,7 +64,7 @@ func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
 				break
 			}
 			break
-		case "dynamodb":
+		case datastore.DYNAMODB_PROVIDER:
 			var p *datastore.DynamoParams
 			p, err = datastore.NewDynamoParams(config.Trace.Params)
 			if err != nil {
@@ -95,11 +95,9 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	// Don't allow panics to escape the bottom handler under any circumstances!
 	defer func() {
 		if rcv := recover(); rcv != nil {
-			if b.logger != nil {
-				stack := make([]byte, MAX_STACK_SIZE)
-				stack = stack[:runtime.Stack(stack, false)]
-				b.logger.Printf("PANIC: %s\n%s", rcv, stack)
-			}
+			stack := make([]byte, MAX_STACK_SIZE)
+			stack = stack[:runtime.Stack(stack, false)]
+			b.logger.Printf("PANIC: %s\n%s", rcv, stack)
 		}
 	}()
 
@@ -126,9 +124,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			if rcv := recover(); rcv != nil {
 				stack := make([]byte, MAX_STACK_SIZE)
 				stack = stack[:runtime.Stack(stack, false)]
-				if b.logger != nil {
-					b.logger.Printf("PANIC: %s\n%s", rcv, stack)
-				}
+				b.logger.Printf("PANIC: %s\n%s", rcv, stack)
 
 				resp := NewError(nil, EcodeInternal, rcv)
 				if b.respStacks {
@@ -139,7 +135,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					}
 				}
 				writeResponse(rw, http.StatusInternalServerError, resp)
-				if b.logger != nil {
+				if b.logRequests {
 					b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
 						req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
 						res.Status(), res.Size(), req.Referer(), req.UserAgent())
@@ -157,7 +153,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 
 		// Invoke the next handler
 		next(ctx, rw, req)
-		if b.logger != nil {
+		if b.logRequests {
 			b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
 				req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
 				res.Status(), res.Size(), req.Referer(), req.UserAgent())

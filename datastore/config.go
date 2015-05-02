@@ -2,6 +2,7 @@ package datastore
 
 const (
 	DYNAMODB_PROVIDER = "dynamodb"
+	YAML_PROVIDER     = "yaml"
 )
 
 // Config holds per-datastore configuration properties.
