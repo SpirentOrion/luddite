@@ -3,9 +3,9 @@ package datastore
 import (
 	"strings"
 
-	"code.google.com/p/go-uuid/uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 func NewGlobalId() string {
-	return strings.ToLower(strings.Replace(uuid.New(), "-", "", -1))
+	return strings.ToLower(strings.Replace(uuid.NewV4().String(), "-", "", -1))
 }
