@@ -12,16 +12,20 @@ type ServiceConfig struct {
 	// Addr is the address:port pair that the HTTP server listens on.
 	Addr  string
 	Debug struct {
-		// Requests, when true, causes logging of requests and responses.
-		Requests bool
 		// Stacks, when true, causes stack traces to appear in 500 error responses.
 		Stacks bool
 		// StackSize sets an upper limit on the length of stack traces that appear in 500 error responses.
 		StackSize int `yaml:"stack_size"`
 	}
 	Log struct {
-		// Prefix sets the log prefix string.
-		Prefix string
+		// ServiceName is the service name, included in all structured log records.
+		ServiceName string `yaml:"service_name"`
+		// ServiceLogPath sets the file path for the service log (written as JSON). If unset, defaults to stdout (written as text).
+		ServiceLogPath string `yaml:"service_log_path"`
+		// ServiceLogLevel sets the minimum log level for the service log, If unset, defaults to INFO.
+		ServiceLogLevel string `yaml:"service_log_level"`
+		// AccessLogPath sets the file path for the access log (written as JSON). If unset, defaults to stdout (written as text).
+		AccessLogPath string `yaml:"access_log_path"`
 	}
 	Metrics struct {
 		// Enabled, when true, enables the service's statsd client.

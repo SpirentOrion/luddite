@@ -2,12 +2,12 @@ package luddite
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/SpirentOrion/luddite/datastore"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
@@ -19,19 +19,19 @@ const MAX_STACK_SIZE = 8 * 1024
 
 // Bottom is middleware that logs the request as it goes in and the response as it goes out.
 type Bottom struct {
-	logger        *log.Logger
+	defaultLogger *log.Entry
+	accessLogger  *log.Entry
 	stats         Stats
-	logRequests   bool
 	respStacks    bool
 	respStackSize int
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
+func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Entry, stats Stats) *Bottom {
 	b := &Bottom{
-		logger:        logger,
+		defaultLogger: defaultLogger,
+		accessLogger:  accessLogger,
 		stats:         stats,
-		logRequests:   config.Debug.Requests,
 		respStacks:    config.Debug.Stacks,
 		respStackSize: config.Debug.StackSize,
 	}
@@ -61,9 +61,7 @@ func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
 			rec, err = yamlrec.New(f)
 			if err != nil {
 				f.Close()
-				break
 			}
-			break
 		case datastore.DYNAMODB_PROVIDER:
 			var p *datastore.DynamoParams
 			p, err = datastore.NewDynamoParams(config.Trace.Params)
@@ -71,20 +69,18 @@ func NewBottom(config *ServiceConfig, logger *log.Logger, stats Stats) *Bottom {
 				break
 			}
 			rec, err = dynamorec.New(p.Region, p.TableName, p.AccessKey, p.SecretKey)
-			break
 		default:
-			err = fmt.Errorf("unknown trace recorder: ", config.Trace.Recorder)
-			break
+			err = fmt.Errorf("unknown trace recorder: %s", config.Trace.Recorder)
 		}
 
 		if rec != nil {
-			err = trace.Record(rec, config.Trace.Buffer, logger)
+			err = trace.Record(rec, config.Trace.Buffer, defaultLogger)
 		}
 
 		if err != nil {
-			logger.Println("trace recording is not active:", err)
+			defaultLogger.Warn("trace recording is not active: ", err)
 		} else {
-			logger.Println("recording traces to", rec)
+			defaultLogger.Debug("recording traces to ", rec)
 		}
 	}
 
@@ -97,7 +93,10 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 		if rcv := recover(); rcv != nil {
 			stack := make([]byte, MAX_STACK_SIZE)
 			stack = stack[:runtime.Stack(stack, false)]
-			b.logger.Printf("PANIC: %s\n%s", rcv, stack)
+			b.defaultLogger.WithFields(log.Fields{
+				"error": rcv,
+				"stack": string(stack),
+			}).Error("PANIC")
 		}
 	}()
 
@@ -124,7 +123,10 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			if rcv := recover(); rcv != nil {
 				stack := make([]byte, MAX_STACK_SIZE)
 				stack = stack[:runtime.Stack(stack, false)]
-				b.logger.Printf("PANIC: %s\n%s", rcv, stack)
+				b.defaultLogger.WithFields(log.Fields{
+					"error": rcv,
+					"stack": string(stack),
+				}).Error("PANIC")
 
 				resp := NewError(nil, EcodeInternal, rcv)
 				if b.respStacks {
@@ -135,11 +137,17 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					}
 				}
 				writeResponse(rw, http.StatusInternalServerError, resp)
-				if b.logRequests {
-					b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
-						req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
-						res.Status(), res.Size(), req.Referer(), req.UserAgent())
-				}
+
+				b.accessLogger.WithFields(log.Fields{
+					"client_addr":   req.RemoteAddr,
+					"forwarded_for": req.Header.Get(HeaderForwardedFor),
+					"proto":         req.Proto,
+					"method":        req.Method,
+					"uri":           req.RequestURI,
+					"status_code":   res.Status(),
+					"size":          res.Size(),
+					"user_agent":    req.UserAgent(),
+				}).Error()
 
 				if s != nil {
 					data := s.Data()
@@ -153,10 +161,23 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 
 		// Invoke the next handler
 		next(ctx, rw, req)
-		if b.logRequests {
-			b.logger.Printf("%s \"%s %s %s\" %v %d \"%s\" \"%s\"",
-				req.RemoteAddr, req.Method, req.RequestURI, req.Proto,
-				res.Status(), res.Size(), req.Referer(), req.UserAgent())
+
+		// Log the request
+		status := res.Status()
+		entry := b.accessLogger.WithFields(log.Fields{
+			"client_addr":   req.RemoteAddr,
+			"forwarded_for": req.Header.Get(HeaderForwardedFor),
+			"proto":         req.Proto,
+			"method":        req.Method,
+			"uri":           req.RequestURI,
+			"status_code":   status,
+			"size":          res.Size(),
+			"user_agent":    req.UserAgent(),
+		})
+		if status/100 != 5 {
+			entry.Info()
+		} else {
+			entry.Error()
 		}
 
 		// Annotate the trace

@@ -65,10 +65,8 @@ func selectSchemaFile(files []string, ct string) (file string) {
 	switch ct {
 	case ContentTypeJson:
 		ext = ".json"
-		break
 	case ContentTypeHtml:
 		ext = ".html"
-		break
 	default:
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -25,6 +26,17 @@ func WithService(ctx context.Context, s Service) context.Context {
 func ContextService(ctx context.Context) Service {
 	s, _ := ctx.Value(contextServiceKey).(Service)
 	return s
+}
+
+// ContextLogger returns the Service's logger instance value from a
+// context.Context, if possible.
+func ContextLogger(ctx context.Context) (logger *log.Entry) {
+	if s, _ := ctx.Value(contextServiceKey).(Service); s != nil {
+		logger = s.Logger()
+	} else {
+		logger = log.NewEntry(log.New())
+	}
+	return
 }
 
 // ContextStats returns the Service's stats instance value from a

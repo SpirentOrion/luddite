@@ -8,6 +8,7 @@ import (
 const (
 	HeaderAccept            = "Accept"
 	HeaderContentType       = "Content-Type"
+	HeaderForwardedFor      = "X-Forwarded-For"
 	HeaderLocation          = "Location"
 	HeaderRequestId         = "X-Request-Id"
 	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
