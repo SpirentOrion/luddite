@@ -3,12 +3,13 @@ package luddite
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/SpirentOrion/httprouter"
 	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
@@ -42,8 +43,8 @@ type Service interface {
 	// Config returns the service's ServiceConfig instance.
 	Config() *ServiceConfig
 
-	// Logger returns the service's log.Logger instance.
-	Logger() *log.Logger
+	// Logger returns the service's log.Entry instance.
+	Logger() *log.Entry
 
 	// Router returns the service's httprouter.Router instance.
 	Router() *httprouter.Router
@@ -58,25 +59,69 @@ type Service interface {
 }
 
 type service struct {
-	config       *ServiceConfig
-	logger       *log.Logger
-	router       *httprouter.Router
-	statsdClient *statsd.StatsdClient
-	stats        *statsd.StatsdBuffer
-	handlers     []Handler
-	middleware   *middleware
-	schema       *SchemaHandler
+	config        *ServiceConfig
+	defaultLogger *log.Entry
+	accessLogger  *log.Entry
+	router        *httprouter.Router
+	statsdClient  *statsd.StatsdClient
+	stats         *statsd.StatsdBuffer
+	handlers      []Handler
+	middleware    *middleware
+	schema        *SchemaHandler
 }
 
 // Verify that service implements Service.
 var _ Service = &service{}
 
 func NewService(config *ServiceConfig) (Service, error) {
-	// Create service
+	var err error
+
+	// Create the service
 	s := &service{
 		config: config,
-		logger: log.New(os.Stderr, config.Log.Prefix, log.LstdFlags),
 		router: httprouter.New(),
+	}
+
+	defaultLogger := log.New()
+	if config.Log.ServiceLogPath != "" {
+		if defaultLogger.Out, err = os.OpenFile(config.Log.ServiceLogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
+			return nil, err
+		}
+		defaultLogger.Formatter = &log.JSONFormatter{}
+	} else {
+		defaultLogger.Out = os.Stdout
+	}
+
+	switch strings.ToLower(config.Log.ServiceLogLevel) {
+	case "debug":
+		defaultLogger.Level = log.DebugLevel
+	default:
+		fallthrough
+	case "info":
+		defaultLogger.Level = log.InfoLevel
+	case "warn":
+		defaultLogger.Level = log.WarnLevel
+	case "error":
+		defaultLogger.Level = log.ErrorLevel
+	}
+
+	accessLogger := log.New()
+	if config.Log.AccessLogPath != "" {
+		if accessLogger.Out, err = os.OpenFile(config.Log.AccessLogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
+			return nil, err
+		}
+		accessLogger.Formatter = &log.JSONFormatter{}
+	} else {
+		accessLogger.Out = os.Stdout
+		accessLogger.Level = log.DebugLevel
+	}
+
+	if config.Log.ServiceName != "" {
+		s.defaultLogger = defaultLogger.WithFields(log.Fields{"service": config.Log.ServiceName})
+		s.accessLogger = accessLogger.WithFields(log.Fields{"service": config.Log.ServiceName})
+	} else {
+		s.defaultLogger = log.NewEntry(defaultLogger)
+		s.accessLogger = log.NewEntry(accessLogger)
 	}
 
 	s.router.NotFound = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
@@ -101,7 +146,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 
 		s.statsdClient = statsd.NewStatsdClient(s.config.Metrics.Server, s.config.Metrics.Prefix)
 		s.stats = statsd.NewStatsdBuffer(s.config.Metrics.Interval, s.statsdClient)
-		s.stats.Logger = s.logger
+		s.stats.Logger = s.defaultLogger
 	}
 
 	// Create default middleware handlers
@@ -176,8 +221,8 @@ func (s *service) Config() *ServiceConfig {
 	return s.config
 }
 
-func (s *service) Logger() *log.Logger {
-	return s.logger
+func (s *service) Logger() *log.Entry {
+	return s.defaultLogger
 }
 
 func (s *service) Router() *httprouter.Router {
@@ -207,16 +252,16 @@ func (s *service) Run() error {
 
 	// Serve HTTP or HTTPS, depending on config
 	if s.config.Transport.TLS {
-		s.logger.Printf("HTTPS listening on %s", s.config.Addr)
+		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
 		return http.ListenAndServeTLS(s.config.Addr, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath, s.middleware)
 	} else {
-		s.logger.Printf("HTTP listening on %s", s.config.Addr)
+		s.defaultLogger.Debugf("HTTP listening on %s", s.config.Addr)
 		return http.ListenAndServe(s.config.Addr, s.middleware)
 	}
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
-	return NewBottom(s.config, s.logger, s.Stats()), nil
+	return NewBottom(s.config, s.defaultLogger, s.accessLogger, s.Stats()), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {

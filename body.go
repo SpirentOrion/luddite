@@ -71,7 +71,6 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				}
 				return
 			}
-			break
 		case ContentTypeXml:
 			b, err = xml.Marshal(v)
 			if err != nil {
@@ -82,15 +81,12 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				}
 				return
 			}
-			break
 		case ContentTypeHtml:
 			switch v.(type) {
 			case []byte:
 				b = v.([]byte)
-				break
 			case string:
 				b = []byte(v.(string))
-				break
 			default:
 				b, err = json.Marshal(v)
 				if err != nil {
@@ -104,9 +100,7 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				esc := new(bytes.Buffer)
 				json.HTMLEscape(esc, b)
 				b = esc.Bytes()
-				break
 			}
-			break
 		}
 	}
 	rw.WriteHeader(status)

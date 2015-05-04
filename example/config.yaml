@@ -2,11 +2,13 @@
 service:
   addr: :8000
   debug:
-    requests: true
     stacks: true
     stack_size: 8192
   log:
-    prefix: "[service] "
+    service_name: service
+    service_log_path:
+    service_log_level: debug
+    access_log_path:
   metrics:
     enabled: false
     server: 127.0.0.1:8125

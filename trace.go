@@ -1,6 +1,5 @@
 package luddite
 
 const (
-	TraceKindRequest  = "request"
-	TraceKindDynamodb = "dynamodb"
+	TraceKindRequest = "request"
 )
