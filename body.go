@@ -55,10 +55,8 @@ func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 	if v != nil {
 		switch v.(type) {
 		case *Error:
-			break
 		case error:
 			v = NewError(nil, EcodeInternal, v)
-			break
 		}
 		switch rw.Header().Get(HeaderContentType) {
 		case ContentTypeJson:

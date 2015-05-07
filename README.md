@@ -34,7 +34,7 @@ each service:
 * Bottom: Combines tracing, logging, metrics, and recovery
   actions. Tracing generates a unique request id and optionally
   records traces to a persistent backend.  Logging logs
-  requests/responses in an Apache-style log format.  Metrics
+  requests/responses in a structured JSON format.  Metrics
   increments basic request/response stats.  Recovery handles panics
   that occur in HTTP method handlers and optionally includes stack
   traces in 500 responses.

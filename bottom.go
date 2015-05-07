@@ -17,7 +17,13 @@ import (
 
 const MAX_STACK_SIZE = 8 * 1024
 
-// Bottom is middleware that logs the request as it goes in and the response as it goes out.
+// Bottom is the bottom-most middleware layer that combines tracing,
+// logging, metrics and recovery actions. Tracing generates a unique
+// request id and optionally records traces to a persistent backend.
+// Logging logs requests/responses in a structured JSON format.
+// Metrics increments basic request/response stats. Recovery handles
+// panics that occur in HTTP method handlers and optionally includes
+// stack traces in 500 responses.
 type Bottom struct {
 	defaultLogger *log.Entry
 	accessLogger  *log.Entry
