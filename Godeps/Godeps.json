@@ -10,13 +10,13 @@
 			"Rev": "416fb5f2f78840726e34b2b899b913684040dc7e"
 		},
 		{
-			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.7.3-4-gaaf92c9",
-			"Rev": "aaf92c95712104318fc35409745f1533aa5ff327"
-		},
-		{
 			"ImportPath": "github.com/SpirentOrion/httprouter",
 			"Rev": "2fc466ce6650ee223bc91d8eae99bc7676e0f693"
+		},
+		{
+			"ImportPath": "github.com/SpirentOrion/logrus",
+			"Comment": "v0.7.3-5-g60a5e5f",
+			"Rev": "60a5e5f14bfe352e66e7a16d4ecf8de759276fe2"
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/trace",

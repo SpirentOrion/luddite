@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/SpirentOrion/httprouter"
+	log "github.com/SpirentOrion/logrus"
 	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
 )
@@ -84,9 +86,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 
 	defaultLogger := log.New()
 	if config.Log.ServiceLogPath != "" {
-		if defaultLogger.Out, err = os.OpenFile(config.Log.ServiceLogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
-			return nil, err
-		}
+		openLogFile(defaultLogger, config.Log.ServiceLogPath)
 		defaultLogger.Formatter = &log.JSONFormatter{}
 	} else {
 		defaultLogger.Out = os.Stdout
@@ -107,9 +107,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 
 	accessLogger := log.New()
 	if config.Log.AccessLogPath != "" {
-		if accessLogger.Out, err = os.OpenFile(config.Log.AccessLogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
-			return nil, err
-		}
+		openLogFile(accessLogger, config.Log.AccessLogPath)
 		accessLogger.Formatter = &log.JSONFormatter{}
 	} else {
 		accessLogger.Out = os.Stdout
@@ -305,4 +303,36 @@ func (s *service) addSchemaRoutes() {
 			http.Redirect(rw, r, config.Schema.UriPath, http.StatusTemporaryRedirect)
 		})
 	}
+}
+
+func openLogFile(logger *log.Logger, logPath string) {
+	sigs := make(chan os.Signal, 1)
+	logging := make(chan bool, 1)
+
+	go func() {
+		var curLog, priorLog *os.File
+		for {
+			// Open and begin using a new log file
+			curLog, _ = os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+			logger.SetOutput(curLog)
+
+			if priorLog == nil {
+				// First log, signal the outer goroutine that we're running
+				logging <- true
+			} else {
+				// Follow-on log, close the prior log file
+				priorLog.Close()
+				priorLog = nil
+			}
+
+			// Wait for a SIGHUP
+			<-sigs
+
+			// Setup for the next iteration
+			priorLog = curLog
+		}
+	}()
+
+	signal.Notify(sigs, syscall.SIGHUP)
+	<-logging
 }

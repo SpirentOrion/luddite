@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/SpirentOrion/logrus"
 	"golang.org/x/net/context"
 )
 

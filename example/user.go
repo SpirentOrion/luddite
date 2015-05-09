@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"sync"
 
+	log "github.com/SpirentOrion/logrus"
 	"github.com/SpirentOrion/luddite"
 	"golang.org/x/net/context"
 )
 
 type User struct {
 	XMLName  xml.Name `json:"-" xml:"user"`
-	Name     string   `json:"name" xml:"name"`
-	Password string   `json:"password,omitempty" xml:"password,omitempty"`
+	Name     string   `json:"name" xml:"name" schema:"name"`
+	Password string   `json:"password,omitempty" xml:"password,omitempty" schema:"password"`
 }
 
 func (u *User) SafeExport() *User {
@@ -73,6 +74,16 @@ func (r *userResource) Create(ctx context.Context, req *http.Request, value inte
 		return http.StatusBadRequest, luddite.NewError(errorDefs, EcodeUserExists, u.Name)
 	}
 	r.users[u.Name] = u
+
+	logger := luddite.ContextLogger(ctx)
+	logger.WithFields(log.Fields{
+		"event": "UserCreated",
+		"name":  u.Name,
+	}).Info()
+
+	stats := luddite.ContextStats(ctx)
+	stats.Incr("users.created", 1)
+
 	return http.StatusCreated, u.SafeExport()
 }
 
@@ -86,6 +97,16 @@ func (r *userResource) Update(ctx context.Context, req *http.Request, id string,
 		return http.StatusNotFound, nil
 	}
 	r.users[u.Name] = u
+
+	logger := luddite.ContextLogger(ctx)
+	logger.WithFields(log.Fields{
+		"event": "UserUpdated",
+		"name":  u.Name,
+	}).Info()
+
+	stats := luddite.ContextStats(ctx)
+	stats.Incr("users.updated", 1)
+
 	return http.StatusOK, u.SafeExport()
 }
 
@@ -94,6 +115,13 @@ func (r *userResource) Delete(ctx context.Context, req *http.Request, id string)
 	defer r.Unlock()
 
 	delete(r.users, id)
+
+	logger := luddite.ContextLogger(ctx)
+	logger.WithFields(log.Fields{
+		"event": "UserDeleted",
+		"name":  id,
+	}).Info()
+
 	return http.StatusNoContent, nil
 }
 
@@ -115,5 +143,12 @@ func (r *userResource) resetPassword(ctx context.Context, req *http.Request, id 
 		return http.StatusNotFound, nil
 	}
 	u.Password = "secret"
+
+	logger := luddite.ContextLogger(ctx)
+	logger.WithFields(log.Fields{
+		"event": "UserPasswordReset",
+		"name":  id,
+	}).Info()
+
 	return http.StatusNoContent, nil
 }
