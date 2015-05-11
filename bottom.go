@@ -153,6 +153,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					"status_code":   res.Status(),
 					"size":          res.Size(),
 					"user_agent":    req.UserAgent(),
+					"req_id":        traceId,
 				}).Error()
 
 				if s != nil {
@@ -179,6 +180,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			"status_code":   status,
 			"size":          res.Size(),
 			"user_agent":    req.UserAgent(),
+			"req_id":        traceId,
 		})
 		if status/100 != 5 {
 			entry.Info()
