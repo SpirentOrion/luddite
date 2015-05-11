@@ -154,6 +154,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					"size":          res.Size(),
 					"user_agent":    req.UserAgent(),
 					"req_id":        traceId,
+					"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
 				}).Error()
 
 				if s != nil {
@@ -181,6 +182,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			"size":          res.Size(),
 			"user_agent":    req.UserAgent(),
 			"req_id":        traceId,
+			"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
 		})
 		if status/100 != 5 {
 			entry.Info()
