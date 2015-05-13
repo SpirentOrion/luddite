@@ -7,12 +7,20 @@ import (
 
 const (
 	HeaderAccept            = "Accept"
+	HeaderAuthorization     = "Authorization"
 	HeaderContentType       = "Content-Type"
 	HeaderForwardedFor      = "X-Forwarded-For"
 	HeaderLocation          = "Location"
 	HeaderRequestId         = "X-Request-Id"
 	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
 )
+
+func RequestBearerToken(r *http.Request) (token string) {
+	if authStr := r.Header.Get(HeaderAuthorization); authStr != "" && authStr[:7] == "Bearer " {
+		token = authStr[7:]
+	}
+	return
+}
 
 func RequestApiVersion(r *http.Request, defaultVersion int) (version int) {
 	version = defaultVersion
