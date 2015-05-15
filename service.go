@@ -148,7 +148,6 @@ func NewService(config *ServiceConfig) (Service, error) {
 	}
 
 	// Create default middleware handlers
-	// NB: failures to initialize/configure tracing should not fail the service startup
 	bottom, err := s.newBottomHandler()
 	if err != nil {
 		return nil, err

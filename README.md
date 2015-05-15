@@ -31,7 +31,7 @@ substantial flexibility.
 Currently, the framework registers several middleware handlers for
 each service:
 
-* Bottom: Combines tracing, logging, metrics, and recovery
+* Bottom: Combines CORS, tracing, logging, metrics, and recovery
   actions. Tracing generates a unique request id and optionally
   records traces to a persistent backend.  Logging logs
   requests/responses in a structured JSON format.  Metrics
