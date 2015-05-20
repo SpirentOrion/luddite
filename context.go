@@ -10,7 +10,7 @@ import (
 
 type contextKeyT int
 
-var (
+const (
 	contextServiceKey    = contextKeyT(0)
 	contextApiVersionKey = contextKeyT(1)
 )

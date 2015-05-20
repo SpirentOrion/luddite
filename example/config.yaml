@@ -1,6 +1,11 @@
 ---
 service:
   addr: :8000
+  cors:
+    enabled: true
+    allowed_origins: []
+    allowed_methods: []
+    allow_credentials: true
   debug:
     stacks: true
     stack_size: 8192

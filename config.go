@@ -10,7 +10,17 @@ import (
 // ServiceConfig is a struct that holds config values relevant to the service framework.
 type ServiceConfig struct {
 	// Addr is the address:port pair that the HTTP server listens on.
-	Addr  string
+	Addr string
+	Cors struct {
+		// Enabled, when true, enables CORS.
+		Enabled bool
+		// AllowedOrigins contains the list of origins a cross-domain request can be executed from. Defaults to "*" on an empty list.
+		AllowedOrigins []string `yaml:"allowed_origins"`
+		// AllowedMethods contains the list of methods the client is allowed to use with cross-domain requests. Defaults to "GET", "POST", "PUT" and "DELETE" on an empty list.
+		AllowedMethods []string `yaml:"allowed_methods"`
+		// AllowCredentials indicates whether the request can include user credentials like cookies or HTTP auth.
+		AllowCredentials bool `yaml:"allow_credentials"`
+	}
 	Debug struct {
 		// Stacks, when true, causes stack traces to appear in 500 error responses.
 		Stacks bool

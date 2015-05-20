@@ -12,24 +12,26 @@ import (
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
+	"github.com/rs/cors"
 	"golang.org/x/net/context"
 )
 
 const MAX_STACK_SIZE = 8 * 1024
 
-// Bottom is the bottom-most middleware layer that combines tracing,
-// logging, metrics and recovery actions. Tracing generates a unique
-// request id and optionally records traces to a persistent backend.
-// Logging logs requests/responses in a structured JSON format.
-// Metrics increments basic request/response stats. Recovery handles
-// panics that occur in HTTP method handlers and optionally includes
-// stack traces in 500 responses.
+// Bottom is the bottom-most middleware layer that combines CORS,
+// tracing, logging, metrics and recovery actions. Tracing generates a
+// unique request id and optionally records traces to a persistent
+// backend.  Logging logs requests/responses in a structured JSON
+// format.  Metrics increments basic request/response stats. Recovery
+// handles panics that occur in HTTP method handlers and optionally
+// includes stack traces in 500 responses.
 type Bottom struct {
 	defaultLogger *log.Entry
 	accessLogger  *log.Entry
 	stats         Stats
 	respStacks    bool
 	respStackSize int
+	cors          *cors.Cors
 }
 
 // NewBottom returns a new Bottom instance.
@@ -44,6 +46,19 @@ func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Entry, st
 
 	if b.respStacks && b.respStackSize < 1 {
 		b.respStackSize = MAX_STACK_SIZE
+	}
+
+	if config.Cors.Enabled {
+		// Enable CORS
+		corsOptions := cors.Options{
+			AllowedOrigins:   config.Cors.AllowedOrigins,
+			AllowedMethods:   config.Cors.AllowedMethods,
+			AllowCredentials: config.Cors.AllowCredentials,
+		}
+		if len(corsOptions.AllowedMethods) == 0 {
+			corsOptions.AllowedMethods = []string{"GET", "POST", "PUT", "DELETE"}
+		}
+		b.cors = cors.New(corsOptions)
 	}
 
 	if config.Trace.Enabled {
@@ -105,6 +120,12 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			}).Error("PANIC")
 		}
 	}()
+
+	// Handle CORS preflight requests prior to tracing
+	if b.cors != nil && req.Method == "OPTIONS" {
+		b.cors.HandlerFunc(rw, req)
+		return
+	}
 
 	// For now, always honor incoming id headers. If present, header must be in the form "traceId:parentId"
 	traceId, parentId := b.getRequestTraceIds(req)
