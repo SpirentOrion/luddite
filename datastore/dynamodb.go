@@ -85,36 +85,53 @@ func (t *DynamoTable) GetItem(id string) (attrs map[string]*dynamodb.Attribute, 
 	return
 }
 
-func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute) (err error) {
+func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute, condAttrs []dynamodb.Attribute) (err error) {
 	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
 	trace.Run(s, func() {
-		_, err = t.Table.PutItem(id, "", attrs)
-		if s != nil {
-			data := s.Data()
-			data["op"] = "PutItem"
-			if err != nil {
-				data["error"] = err
+		if len(condAttrs) != 0 {
+			_, err = t.Table.ConditionalPutItem(id, "", attrs, condAttrs)
+			if s != nil {
+				data := s.Data()
+				data["op"] = "ConditionalPutItem"
+				if err != nil {
+					data["error"] = err
+				}
+			}
+		} else {
+			_, err = t.Table.PutItem(id, "", attrs)
+			if s != nil {
+				data := s.Data()
+				data["op"] = "PutItem"
+				if err != nil {
+					data["error"] = err
+				}
 			}
 		}
 	})
 	return
 }
 
-func (t *DynamoTable) UpdateItem(id string, serial int64, attrs []dynamodb.Attribute) (err error) {
+func (t *DynamoTable) UpdateItem(id string, attrs []dynamodb.Attribute, condAttrs []dynamodb.Attribute) (err error) {
 	s, _ := trace.Continue(DYNAMODB_PROVIDER, t.String())
 	trace.Run(s, func() {
 		key := &dynamodb.Key{HashKey: id}
-		serialAttr := []dynamodb.Attribute{{
-			Type:  dynamodb.TYPE_NUMBER,
-			Name:  "serial",
-			Value: fmt.Sprint(serial),
-		}}
-		_, err = t.Table.ConditionalUpdateAttributes(key, attrs, serialAttr)
-		if s != nil {
-			data := s.Data()
-			data["op"] = "ConditionalUpdateAttributes"
-			if err != nil {
-				data["error"] = err
+		if len(condAttrs) != 0 {
+			_, err = t.Table.ConditionalUpdateAttributes(key, attrs, condAttrs)
+			if s != nil {
+				data := s.Data()
+				data["op"] = "ConditionalUpdateAttributes"
+				if err != nil {
+					data["error"] = err
+				}
+			}
+		} else {
+			_, err = t.Table.UpdateAttributes(key, attrs)
+			if s != nil {
+				data := s.Data()
+				data["op"] = "UpdateAttributes"
+				if err != nil {
+					data["error"] = err
+				}
 			}
 		}
 	})
