@@ -13,6 +13,7 @@ import (
 
 	"github.com/SpirentOrion/httprouter"
 	log "github.com/SpirentOrion/logrus"
+	"github.com/SpirentOrion/luddite/stats"
 	"github.com/quipo/statsd"
 	"golang.org/x/net/context"
 )
@@ -24,7 +25,7 @@ const (
 )
 
 var (
-	nullStats = &NullStats{}
+	nullStats = &stats.NullStats{}
 )
 
 // Service is an interface that implements a standalone RESTful web service.
@@ -52,7 +53,7 @@ type Service interface {
 	Router() *httprouter.Router
 
 	// Stats returns the service's Stats instance.
-	Stats() Stats
+	Stats() stats.Stats
 
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
@@ -226,7 +227,7 @@ func (s *service) Router() *httprouter.Router {
 	return s.router
 }
 
-func (s *service) Stats() Stats {
+func (s *service) Stats() stats.Stats {
 	if s.stats != nil {
 		return s.stats
 	} else {

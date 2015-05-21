@@ -1,4 +1,4 @@
-package luddite
+package stats
 
 import "time"
 

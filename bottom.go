@@ -9,6 +9,7 @@ import (
 
 	log "github.com/SpirentOrion/logrus"
 	"github.com/SpirentOrion/luddite/datastore"
+	"github.com/SpirentOrion/luddite/stats"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
@@ -28,14 +29,14 @@ const MAX_STACK_SIZE = 8 * 1024
 type Bottom struct {
 	defaultLogger *log.Entry
 	accessLogger  *log.Entry
-	stats         Stats
+	stats         stats.Stats
 	respStacks    bool
 	respStackSize int
 	cors          *cors.Cors
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Entry, stats Stats) *Bottom {
+func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Entry, stats stats.Stats) *Bottom {
 	b := &Bottom{
 		defaultLogger: defaultLogger,
 		accessLogger:  accessLogger,

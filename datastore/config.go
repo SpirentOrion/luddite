@@ -2,6 +2,7 @@ package datastore
 
 const (
 	DYNAMODB_PROVIDER = "dynamodb"
+	POSTGRES_PROVIDER = "postgres"
 	YAML_PROVIDER     = "yaml"
 )
 

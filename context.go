@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	log "github.com/SpirentOrion/logrus"
+	"github.com/SpirentOrion/luddite/stats"
 	"golang.org/x/net/context"
 )
 
@@ -41,7 +42,7 @@ func ContextLogger(ctx context.Context) (logger *log.Entry) {
 
 // ContextStats returns the Service's stats instance value from a
 // context.Context, if possible.
-func ContextStats(ctx context.Context) (stats Stats) {
+func ContextStats(ctx context.Context) (stats stats.Stats) {
 	if s, _ := ctx.Value(contextServiceKey).(Service); s != nil {
 		stats = s.Stats()
 	} else {
