@@ -29,6 +29,7 @@ type PostgresParams struct {
 	DbName       string
 	Host         string
 	Port         int
+	SslMode      string
 	MaxIdleConns int
 	MaxOpenConns int
 }
@@ -42,6 +43,7 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 		DbName:   params["db_name"],
 		Host:     params["host"],
 		Port:     5432,
+		SslMode:  params["ssl_mode"],
 	}
 
 	if p.User == "" {
@@ -58,6 +60,9 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 	}
 	if port, err := strconv.Atoi(params["port"]); err == nil {
 		p.Port = port
+	}
+	if p.SslMode == "" {
+		p.SslMode = "require"
 	}
 	if maxIdleConns, err := strconv.Atoi(params["max_idle_conns"]); err == nil {
 		p.MaxIdleConns = maxIdleConns
@@ -78,8 +83,8 @@ type PostgresDb struct {
 }
 
 func NewPostgresDb(params *PostgresParams, logger *log.Entry, stats stats.Stats) (*PostgresDb, error) {
-	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=verify-full",
-		params.User, params.Password, params.DbName, params.Host, params.Port))
+	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
+		params.User, params.Password, params.DbName, params.Host, params.Port, params.SslMode))
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +119,7 @@ func (db *PostgresDb) Exec(query string, args ...interface{}) (res sql.Result, e
 			if err != nil {
 				data["error"] = err
 			} else {
+				data["query"] = query
 				rows, _ := res.RowsAffected()
 				data["rows"] = rows
 			}
@@ -141,6 +147,8 @@ func (db *PostgresDb) Query(query string, args ...interface{}) (rows *sql.Rows, 
 			data["op"] = "Query"
 			if err != nil {
 				data["error"] = err
+			} else {
+				data["query"] = query
 			}
 		}
 	})
@@ -150,25 +158,6 @@ func (db *PostgresDb) Query(query string, args ...interface{}) (rows *sql.Rows, 
 	if err != nil {
 		db.handleError("Query", query, err)
 	}
-	return
-}
-
-func (db *PostgresDb) QueryRow(query string, args ...interface{}) (row *sql.Row) {
-	var latency time.Duration
-
-	s, _ := trace.Continue(POSTGRES_PROVIDER, db.String())
-	trace.Run(s, func() {
-		start := time.Now()
-		row = db.DB.QueryRow(query, args...)
-		latency = time.Since(start)
-		if s != nil {
-			data := s.Data()
-			data["op"] = "QueryRow"
-		}
-	})
-
-	db.stats.Incr(db.statsPrefix+statPostgresQuerySuffix, 1)
-	db.stats.PrecisionTiming(db.statsPrefix+statPostgresQueryLatencySuffix, latency)
 	return
 }
 
