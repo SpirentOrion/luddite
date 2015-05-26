@@ -18,7 +18,7 @@ const (
 
 var formDecoder = schema.NewDecoder()
 
-func readRequest(req *http.Request, r Resource) (interface{}, error) {
+func ReadRequest(req *http.Request, r Resource) (interface{}, error) {
 	switch ct := req.Header.Get(HeaderContentType); ct {
 	case ContentTypeWwwFormUrlencoded:
 		if err := req.ParseForm(); err != nil {
@@ -50,7 +50,7 @@ func readRequest(req *http.Request, r Resource) (interface{}, error) {
 	}
 }
 
-func writeResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
+func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
 	var b []byte
 	if v != nil {
 		switch v.(type) {

@@ -164,7 +164,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 						resp.Stack = string(stack)
 					}
 				}
-				writeResponse(rw, http.StatusInternalServerError, resp)
+				WriteResponse(rw, http.StatusInternalServerError, resp)
 
 				b.accessLogger.WithFields(log.Fields{
 					"client_addr":   req.RemoteAddr,
