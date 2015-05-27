@@ -48,7 +48,7 @@ func TestReadJson(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleJsonBody))
 	req.Header[HeaderContentType] = []string{ContentTypeJson}
 
-	v, err := readRequest(req, &sampleResource{})
+	v, err := ReadRequest(req, &sampleResource{})
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -84,7 +84,7 @@ func TestWriteJson(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeJson)
 
-	if err := writeResponse(rw, http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -106,7 +106,7 @@ func TestReadXml(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleXmlBody))
 	req.Header[HeaderContentType] = []string{ContentTypeXml}
 
-	v, err := readRequest(req, &sampleResource{})
+	v, err := ReadRequest(req, &sampleResource{})
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -142,7 +142,7 @@ func TestWriteXml(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeXml)
 
-	if err := writeResponse(rw, http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -165,7 +165,7 @@ func TestWriteHtml(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := writeResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -186,7 +186,7 @@ func TestWriteHtml(t *testing.T) {
 	rw = httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := writeResponse(rw, http.StatusOK, sampleData); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, sampleData); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -215,7 +215,7 @@ func TestWriteHtml(t *testing.T) {
 	rw = httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := writeResponse(rw, http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}

@@ -83,12 +83,12 @@ func (c *Context) HandleHTTP(ctx context.Context, rw http.ResponseWriter, r *htt
 	version := RequestApiVersion(r, defaultVersion)
 	if version < c.minVersion {
 		e := NewError(nil, EcodeApiVersionTooOld, c.minVersion)
-		writeResponse(rw, http.StatusGone, e)
+		WriteResponse(rw, http.StatusGone, e)
 		return
 	}
 	if version > c.maxVersion {
 		e := NewError(nil, EcodeApiVersionTooNew, c.maxVersion)
-		writeResponse(rw, http.StatusNotImplemented, e)
+		WriteResponse(rw, http.StatusNotImplemented, e)
 		return
 	}
 

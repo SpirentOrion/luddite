@@ -58,7 +58,7 @@ type Resource interface {
 func addListRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.GET(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		status, v := r.List(ctx, req)
-		writeResponse(rw, status, v)
+		WriteResponse(rw, status, v)
 	})
 }
 
@@ -73,15 +73,15 @@ func addGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 		vars := httprouter.ContextParams(ctx)
 		id := vars.ByName("id")
 		status, v := r.Get(ctx, req, id)
-		writeResponse(rw, status, v)
+		WriteResponse(rw, status, v)
 	})
 }
 
 func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.POST(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		v0, err := readRequest(req, r)
+		v0, err := ReadRequest(req, r)
 		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, err)
+			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
 		status, v1 := r.Create(ctx, req, v0)
@@ -93,7 +93,7 @@ func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 			}
 			rw.Header().Add(HeaderLocation, url.String())
 		}
-		writeResponse(rw, status, v1)
+		WriteResponse(rw, status, v1)
 	})
 }
 
@@ -107,17 +107,17 @@ func addUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 	router.PUT(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		vars := httprouter.ContextParams(ctx)
 		id := vars.ByName("id")
-		v0, err := readRequest(req, r)
+		v0, err := ReadRequest(req, r)
 		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, err)
+			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
 		if withId && id != r.Id(v0) {
-			writeResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
+			WriteResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
 			return
 		}
 		status, v1 := r.Update(ctx, req, id, v0)
-		writeResponse(rw, status, v1)
+		WriteResponse(rw, status, v1)
 	})
 }
 
@@ -132,7 +132,7 @@ func addDeleteRoute(router *httprouter.Router, basePath string, withId bool, r R
 		vars := httprouter.ContextParams(ctx)
 		id := vars.ByName("id")
 		status, v := r.Delete(ctx, req, id)
-		writeResponse(rw, status, v)
+		WriteResponse(rw, status, v)
 	})
 }
 
@@ -151,7 +151,7 @@ func addActionRoute(router *httprouter.Router, basePath string, withId bool, r R
 		}
 		action := vars.ByName("action")
 		status, v := r.Action(ctx, req, id, action)
-		writeResponse(rw, status, v)
+		WriteResponse(rw, status, v)
 	})
 }
 
