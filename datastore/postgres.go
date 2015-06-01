@@ -11,6 +11,10 @@ import (
 	"github.com/lib/pq"
 )
 
+const (
+	PostgresErrorSerializationFailure = "40001"
+)
+
 // PostgresParams holds connection and auth properties for
 // Postgres-based datastores.
 type PostgresParams struct {
