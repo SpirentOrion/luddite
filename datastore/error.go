@@ -2,14 +2,6 @@ package datastore
 
 import "fmt"
 
-type LockError struct {
-	Item string
-}
-
-func (e *LockError) Error() string {
-	return fmt.Sprintf("%s is locked", e.Item)
-}
-
 type UpdatePreemptionError struct {
 	OldSerial int64
 	NewSerial int64
