@@ -36,6 +36,10 @@
 			"Rev": "ad637a587dd8314770a1084481dd7b5d4fa1232f"
 		},
 		{
+			"ImportPath": "github.com/goamz/goamz/sqs",
+			"Rev": "ad637a587dd8314770a1084481dd7b5d4fa1232f"
+		},
+		{
 			"ImportPath": "github.com/gorilla/schema",
 			"Rev": "ec21cc92d9d6e15cdb9f82fb6d686875c6857eee"
 		},
