@@ -6,31 +6,31 @@ import (
 )
 
 const (
-	EcodeUnknown                 = "UNKNOWN_ERROR"
-	EcodeInternal                = "INTERNAL_ERROR"
-	EcodeUnsupportedMediaType    = "UNSUPPORTED_MEDIA_TYPE"
-	EcodeSerializationFailed     = "SERIALIZATION_FAILED"
-	EcodeDeserializationFailed   = "DESERIALIZATION_FAILED"
-	EcodeResourceIdMismatch      = "RESOURCE_ID_MISMATCH"
-	EcodeResourceLocked          = "RESOURCE_LOCKED"
-	EcodeResourceUpdatePreempted = "RESOURCE_UPDATE_PREEMPTED"
-	EcodeValidationFailed        = "VALIDATION_FAILED"
-	EcodeApiVersionTooOld        = "API_VERSION_TOO_OLD"
-	EcodeApiVersionTooNew        = "API_VERSION_TOO_NEW"
+	EcodeUnknown               = "UNKNOWN_ERROR"
+	EcodeInternal              = "INTERNAL_ERROR"
+	EcodeUnsupportedMediaType  = "UNSUPPORTED_MEDIA_TYPE"
+	EcodeSerializationFailed   = "SERIALIZATION_FAILED"
+	EcodeDeserializationFailed = "DESERIALIZATION_FAILED"
+	EcodeResourceIdMismatch    = "RESOURCE_ID_MISMATCH"
+	EcodeApiVersionTooOld      = "API_VERSION_TOO_OLD"
+	EcodeApiVersionTooNew      = "API_VERSION_TOO_NEW"
+	EcodeValidationFailed      = "VALIDATION_FAILED"
+	EcodeLocked                = "LOCKED"
+	EcodeUpdatePreempted       = "UPDATE_PREEMPTED"
 )
 
 var commonErrorMap = map[string]string{
-	EcodeUnknown:                 "Unknown error: %d",
-	EcodeInternal:                "Internal error: %v",
-	EcodeUnsupportedMediaType:    "Unsupported media type: %s",
-	EcodeSerializationFailed:     "Serialization failed: %s",
-	EcodeDeserializationFailed:   "Deserialization failed: %s",
-	EcodeResourceIdMismatch:      "Resource identifier in URL doesn't match value in body",
-	EcodeResourceLocked:          "Resource is locked",
-	EcodeResourceUpdatePreempted: "Resource update preempted: %s",
-	EcodeValidationFailed:        "Validation failed: %s",
-	EcodeApiVersionTooOld:        "The minimum supported API version number is %d",
-	EcodeApiVersionTooNew:        "The maximum supported API version number is %d",
+	EcodeUnknown:               "Unknown error: %d",
+	EcodeInternal:              "Internal error: %v",
+	EcodeUnsupportedMediaType:  "Unsupported media type: %s",
+	EcodeSerializationFailed:   "Serialization failed: %s",
+	EcodeDeserializationFailed: "Deserialization failed: %s",
+	EcodeResourceIdMismatch:    "Resource identifier in URL doesn't match value in body",
+	EcodeApiVersionTooOld:      "The minimum supported API version number is %d",
+	EcodeApiVersionTooNew:      "The maximum supported API version number is %d",
+	EcodeValidationFailed:      "Validation failed: %s",
+	EcodeLocked:                "Resource is locked: %s",
+	EcodeUpdatePreempted:       "Update was preempted: %s",
 }
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
