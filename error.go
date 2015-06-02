@@ -29,7 +29,7 @@ var commonErrorMap = map[string]string{
 	EcodeApiVersionTooOld:      "The minimum supported API version number is %d",
 	EcodeApiVersionTooNew:      "The maximum supported API version number is %d",
 	EcodeValidationFailed:      "Validation failed: %s",
-	EcodeLocked:                "Resource is locked: %s",
+	EcodeLocked:                "Lock error: %s",
 	EcodeUpdatePreempted:       "Update was preempted: %s",
 }
 
