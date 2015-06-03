@@ -2,12 +2,12 @@ package datastore
 
 import "fmt"
 
-type UpdatePreemptionError struct {
+type UpdatePreemptedError struct {
 	OldSerial int64
 	NewSerial int64
 }
 
-func (e *UpdatePreemptionError) Error() string {
+func (e *UpdatePreemptedError) Error() string {
 	return fmt.Sprintf("%d subsequent update(s) have occurred", e.NewSerial-e.OldSerial)
 }
 

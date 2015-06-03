@@ -48,26 +48,25 @@ func TestReadJson(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleJsonBody))
 	req.Header[HeaderContentType] = []string{ContentTypeJson}
 
-	v, err := ReadRequest(req, &sampleResource{})
-	if err != nil {
+	v := &sample{}
+	if err := ReadRequest(req, v); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	s := v.(*sample)
-	if s.Id != sampleId {
+	if v.Id != sampleId {
 		t.Error("JSON int deserialization failed")
 	}
-	if s.Name != sampleName {
+	if v.Name != sampleName {
 		t.Error("JSON string deserialization failed")
 	}
-	if !s.Flag {
+	if !v.Flag {
 		t.Error("JSON bool deserialization failed")
 	}
-	if !bytes.Equal(s.Data, []byte(sampleData)) {
+	if !bytes.Equal(v.Data, []byte(sampleData)) {
 		t.Error("JSON binary deserialization failed")
 	}
-	if s.Timestamp != sampleTimestamp {
+	if v.Timestamp != sampleTimestamp {
 		t.Error("JSON date deserialization failed")
 	}
 }
@@ -106,26 +105,25 @@ func TestReadXml(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleXmlBody))
 	req.Header[HeaderContentType] = []string{ContentTypeXml}
 
-	v, err := ReadRequest(req, &sampleResource{})
-	if err != nil {
+	v := &sample{}
+	if err := ReadRequest(req, v); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	s := v.(*sample)
-	if s.Id != sampleId {
+	if v.Id != sampleId {
 		t.Error("XML int deserialization failed")
 	}
-	if s.Name != sampleName {
+	if v.Name != sampleName {
 		t.Error("XML string deserialization failed")
 	}
-	if !s.Flag {
+	if !v.Flag {
 		t.Error("XML bool deserialization failed")
 	}
-	if !bytes.Equal(s.Data, []byte(sampleData)) {
+	if !bytes.Equal(v.Data, []byte(sampleData)) {
 		t.Error("XML binary deserialization failed")
 	}
-	if s.Timestamp != sampleTimestamp {
+	if v.Timestamp != sampleTimestamp {
 		t.Error("XML date deserialization failed")
 	}
 }

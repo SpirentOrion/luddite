@@ -79,8 +79,8 @@ func addGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 
 func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.POST(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		v0, err := ReadRequest(req, r)
-		if err != nil {
+		v0 := r.New()
+		if err := ReadRequest(req, v0); err != nil {
 			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
@@ -107,8 +107,8 @@ func addUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 	router.PUT(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		vars := httprouter.ContextParams(ctx)
 		id := vars.ByName("id")
-		v0, err := ReadRequest(req, r)
-		if err != nil {
+		v0 := r.New()
+		if err := ReadRequest(req, v0); err != nil {
 			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}

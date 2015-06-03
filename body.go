@@ -18,35 +18,32 @@ const (
 
 var formDecoder = schema.NewDecoder()
 
-func ReadRequest(req *http.Request, r Resource) (interface{}, error) {
+func ReadRequest(req *http.Request, v interface{}) error {
 	switch ct := req.Header.Get(HeaderContentType); ct {
 	case ContentTypeWwwFormUrlencoded:
 		if err := req.ParseForm(); err != nil {
-			return nil, NewError(nil, EcodeDeserializationFailed, err)
+			return NewError(nil, EcodeDeserializationFailed, err)
 		}
-		v := r.New()
 		if err := formDecoder.Decode(v, req.PostForm); err != nil {
-			return nil, NewError(nil, EcodeDeserializationFailed, err)
+			return NewError(nil, EcodeDeserializationFailed, err)
 		}
-		return v, nil
+		return nil
 	case ContentTypeJson:
 		decoder := json.NewDecoder(req.Body)
-		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			return nil, NewError(nil, EcodeDeserializationFailed, err)
+			return NewError(nil, EcodeDeserializationFailed, err)
 		}
-		return v, nil
+		return nil
 	case ContentTypeXml:
 		decoder := xml.NewDecoder(req.Body)
-		v := r.New()
 		err := decoder.Decode(v)
 		if err != nil {
-			return nil, NewError(nil, EcodeDeserializationFailed, err)
+			return NewError(nil, EcodeDeserializationFailed, err)
 		}
-		return v, nil
+		return nil
 	default:
-		return nil, NewError(nil, EcodeUnsupportedMediaType, ct)
+		return NewError(nil, EcodeUnsupportedMediaType, ct)
 	}
 }
 
