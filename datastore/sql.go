@@ -19,12 +19,13 @@ const (
 )
 
 type SqlDb struct {
-	provider    string
-	name        string
-	logger      *log.Entry
-	stats       stats.Stats
-	statsPrefix string
-	handleError func(db *SqlDb, op, query string, err error)
+	provider         string
+	name             string
+	logger           *log.Entry
+	stats            stats.Stats
+	statsPrefix      string
+	handleError      func(db *SqlDb, op, query string, err error)
+	shouldRetryError func(db *SqlDb, err error) bool
 	*sql.DB
 }
 
@@ -114,6 +115,10 @@ func (db *SqlDb) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	return
 }
 
+func (db *SqlDb) ShouldRetryError(err error) bool {
+	return db.shouldRetryError(db, err)
+}
+
 type SqlTx struct {
 	db *SqlDb
 	*sql.Tx
@@ -138,6 +143,9 @@ func (tx *SqlTx) Commit() (err error) {
 	})
 
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, "", err)
 	}
 	return
@@ -179,6 +187,9 @@ func (tx *SqlTx) Exec(query string, args ...interface{}) (res sql.Result, err er
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlExecSuffix, 1)
 	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlExecLatencySuffix, latency)
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, query, err)
 	}
 	return
@@ -207,6 +218,9 @@ func (tx *SqlTx) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlQuerySuffix, 1)
 	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlQueryLatencySuffix, latency)
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, query, err)
 	}
 	return
