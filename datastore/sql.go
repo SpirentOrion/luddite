@@ -143,6 +143,9 @@ func (tx *SqlTx) Commit() (err error) {
 	})
 
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, "", err)
 	}
 	return
@@ -184,6 +187,9 @@ func (tx *SqlTx) Exec(query string, args ...interface{}) (res sql.Result, err er
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlExecSuffix, 1)
 	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlExecLatencySuffix, latency)
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, query, err)
 	}
 	return
@@ -212,6 +218,9 @@ func (tx *SqlTx) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlQuerySuffix, 1)
 	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlQueryLatencySuffix, latency)
 	if err != nil {
+		if tx.db.shouldRetryError(tx.db, err) {
+			tx.Tx.Rollback()
+		}
 		tx.db.handleError(tx.db, op, query, err)
 	}
 	return
