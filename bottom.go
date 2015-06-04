@@ -183,6 +183,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					data := s.Data()
 					data["panic"] = rcv
 					data["stack"] = string(stack)
+					data["req_method"] = req.Method
 					data["resp_status"] = res.Status()
 					data["resp_size"] = res.Size()
 				}
