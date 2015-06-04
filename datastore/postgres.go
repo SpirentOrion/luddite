@@ -79,13 +79,14 @@ func NewPostgresDb(params *PostgresParams, logger *log.Entry, stats stats.Stats)
 	db.SetMaxOpenConns(params.MaxOpenConns)
 
 	return &SqlDb{
-		provider:    POSTGRES_PROVIDER,
-		name:        fmt.Sprintf("%s{%s:%d/%s}", POSTGRES_PROVIDER, params.Host, params.Port, params.DbName),
-		logger:      logger,
-		stats:       stats,
-		statsPrefix: fmt.Sprintf("datastore.%s.%s.", POSTGRES_PROVIDER, params.DbName),
-		handleError: handlePostgresError,
-		DB:          db,
+		provider:         POSTGRES_PROVIDER,
+		name:             fmt.Sprintf("%s{%s:%d/%s}", POSTGRES_PROVIDER, params.Host, params.Port, params.DbName),
+		logger:           logger,
+		stats:            stats,
+		statsPrefix:      fmt.Sprintf("datastore.%s.%s.", POSTGRES_PROVIDER, params.DbName),
+		handleError:      handlePostgresError,
+		shouldRetryError: shouldRetryPostgresError,
+		DB:               db,
 	}, nil
 }
 
@@ -116,4 +117,11 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 
 		db.stats.Incr(db.statsPrefix+statSqlErrorSuffix+"other", 1)
 	}
+}
+
+func shouldRetryPostgresError(db *SqlDb, err error) bool {
+	if pgErr, ok := err.(pq.Error); ok && pgErr.Code == PostgresErrorSerializationFailure {
+		return true
+	}
+	return false
 }

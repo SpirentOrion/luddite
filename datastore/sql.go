@@ -19,12 +19,13 @@ const (
 )
 
 type SqlDb struct {
-	provider    string
-	name        string
-	logger      *log.Entry
-	stats       stats.Stats
-	statsPrefix string
-	handleError func(db *SqlDb, op, query string, err error)
+	provider         string
+	name             string
+	logger           *log.Entry
+	stats            stats.Stats
+	statsPrefix      string
+	handleError      func(db *SqlDb, op, query string, err error)
+	shouldRetryError func(db *SqlDb, err error) bool
 	*sql.DB
 }
 
@@ -112,6 +113,10 @@ func (db *SqlDb) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 		db.handleError(db, op, query, err)
 	}
 	return
+}
+
+func (db *SqlDb) ShouldRetryError(err error) bool {
+	return db.shouldRetryError(db, err)
 }
 
 type SqlTx struct {
