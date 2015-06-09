@@ -61,7 +61,7 @@ func NewSqsQueue(params *SqsParams, logger *log.Entry, stats stats.Stats) (*SqsQ
 		return nil, err
 	}
 	sqs := sqs.New(auth, aws.Regions[params.Region])
-	queue, err := sqs.CreateQueue(params.QueueName)
+	queue, err := sqs.GetQueue(params.QueueName)
 	if err != nil {
 		return nil, err
 	}
