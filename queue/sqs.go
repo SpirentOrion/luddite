@@ -52,6 +52,7 @@ func NewSqsParams(params map[string]string) (*SqsParams, error) {
 }
 
 type SqsQueue struct {
+	name        string
 	logger      *log.Entry
 	stats       stats.Stats
 	statsPrefix string
@@ -69,6 +70,7 @@ func NewSqsQueue(params *SqsParams, logger *log.Entry, stats stats.Stats) (*SqsQ
 		return nil, err
 	}
 	return &SqsQueue{
+		name:        params.QueueName,
 		logger:      logger,
 		stats:       stats,
 		statsPrefix: fmt.Sprintf("queue.%s.%s.%s.", SQS_PROVIDER, params.Region, params.QueueName),
@@ -77,7 +79,7 @@ func NewSqsQueue(params *SqsParams, logger *log.Entry, stats stats.Stats) (*SqsQ
 }
 
 func (q *SqsQueue) String() string {
-	return q.queue.Name
+	return q.name
 }
 
 func (q *SqsQueue) Send(msg *Message) error {
@@ -87,7 +89,7 @@ func (q *SqsQueue) Send(msg *Message) error {
 	if err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.queue.Region,
+			"region":     q.queue.Region.Name,
 			"queue_name": q.queue.Name,
 			"op":         op,
 			"error":      err,
@@ -100,7 +102,7 @@ func (q *SqsQueue) Send(msg *Message) error {
 	if err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.queue.Region,
+			"region":     q.queue.Region.Name,
 			"queue_name": q.queue.Name,
 			"op":         op,
 			"error":      err,
@@ -111,7 +113,7 @@ func (q *SqsQueue) Send(msg *Message) error {
 
 	q.logger.WithFields(log.Fields{
 		"provider":   SQS_PROVIDER,
-		"region":     q.queue.Region,
+		"region":     q.queue.Region.Name,
 		"queue_name": q.queue.Name,
 		"op":         op,
 		"message_id": resp.Id,
@@ -140,8 +142,8 @@ func (q *SqsQueue) Receive(maxMessages int, waitTime time.Duration) ([]SqsMessag
 	if err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.queue.Region,
-			"queue_name": q.queue.Name,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.name,
 			"op":         op,
 			"error":      err,
 		}).Error(err.Error())
@@ -158,8 +160,8 @@ func (q *SqsQueue) Receive(maxMessages int, waitTime time.Duration) ([]SqsMessag
 		if err := json.Unmarshal([]byte(respMsg.Body), &msg.Message); err != nil {
 			q.logger.WithFields(log.Fields{
 				"provider":   SQS_PROVIDER,
-				"region":     q.queue.Region,
-				"queue_name": q.queue.Name,
+				"region":     q.queue.Region.Name,
+				"queue_name": q.name,
 				"op":         op,
 				"message_id": respMsg.MessageId,
 				"error":      err,
@@ -174,8 +176,8 @@ func (q *SqsQueue) Receive(maxMessages int, waitTime time.Duration) ([]SqsMessag
 
 		q.logger.WithFields(log.Fields{
 			"provider":       SQS_PROVIDER,
-			"region":         q.queue.Region,
-			"queue_name":     q.queue.Name,
+			"region":         q.queue.Region.Name,
+			"queue_name":     q.name,
 			"op":             op,
 			"message_id":     msg.MessageId,
 			"receipt_handle": msg.ReceiptHandle,
@@ -192,8 +194,8 @@ func (q *SqsQueue) Delete(receiptHandle string) error {
 	if _, err := q.queue.DeleteMessageUsingReceiptHandle(receiptHandle); err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.queue.Region,
-			"queue_name": q.queue.Name,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.name,
 			"op":         op,
 			"error":      err,
 		}).Error()
@@ -203,8 +205,8 @@ func (q *SqsQueue) Delete(receiptHandle string) error {
 
 	q.logger.WithFields(log.Fields{
 		"provider":       SQS_PROVIDER,
-		"region":         q.queue.Region,
-		"queue_name":     q.queue.Name,
+		"region":         q.queue.Region.Name,
+		"queue_name":     q.name,
 		"op":             op,
 		"receipt_handle": receiptHandle,
 	}).Info()
