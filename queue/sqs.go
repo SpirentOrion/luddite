@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	log "github.com/SpirentOrion/logrus"
@@ -13,8 +14,10 @@ import (
 )
 
 const (
-	statSqsSendSuffix  = ".send"
-	statSqsErrorSuffix = ".error."
+	statSqsSendSuffix    = ".send"
+	statSqsReceiveSuffix = ".receive"
+	statSqsDeleteSuffix  = ".delete"
+	statSqsErrorSuffix   = ".error"
 )
 
 // Verify that SqsQueue implements Queue.
@@ -49,10 +52,11 @@ func NewSqsParams(params map[string]string) (*SqsParams, error) {
 }
 
 type SqsQueue struct {
+	name        string
 	logger      *log.Entry
 	stats       stats.Stats
 	statsPrefix string
-	*sqs.Queue
+	queue       *sqs.Queue
 }
 
 func NewSqsQueue(params *SqsParams, logger *log.Entry, stats stats.Stats) (*SqsQueue, error) {
@@ -66,11 +70,16 @@ func NewSqsQueue(params *SqsParams, logger *log.Entry, stats stats.Stats) (*SqsQ
 		return nil, err
 	}
 	return &SqsQueue{
+		name:        params.QueueName,
 		logger:      logger,
 		stats:       stats,
 		statsPrefix: fmt.Sprintf("queue.%s.%s.%s.", SQS_PROVIDER, params.Region, params.QueueName),
-		Queue:       queue,
+		queue:       queue,
 	}, nil
+}
+
+func (q *SqsQueue) String() string {
+	return q.name
 }
 
 func (q *SqsQueue) Send(msg *Message) error {
@@ -80,21 +89,113 @@ func (q *SqsQueue) Send(msg *Message) error {
 	if err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.Queue.Region,
-			"queue_name": q.Queue.Name,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.queue.Name,
 			"op":         op,
 			"error":      err,
-		}).Error()
+		}).Error(err.Error())
 		q.stats.Incr(q.statsPrefix+statSqsErrorSuffix, 1)
 		return err
 	}
 
-	resp, err := q.SendMessage(string(buf))
+	resp, err := q.queue.SendMessage(string(buf))
 	if err != nil {
 		q.logger.WithFields(log.Fields{
 			"provider":   SQS_PROVIDER,
-			"region":     q.Queue.Region,
-			"queue_name": q.Queue.Name,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.queue.Name,
+			"op":         op,
+			"error":      err,
+		}).Error(err.Error())
+		q.stats.Incr(q.statsPrefix+statSqsErrorSuffix, 1)
+		return err
+	}
+
+	q.logger.WithFields(log.Fields{
+		"provider":   SQS_PROVIDER,
+		"region":     q.queue.Region.Name,
+		"queue_name": q.queue.Name,
+		"op":         op,
+		"message_id": resp.Id,
+	}).Info()
+	q.stats.Incr(q.statsPrefix+statSqsSendSuffix, 1)
+	return nil
+}
+
+// SqsMessage holds Messages and extra properties for messages
+// received from an SQS queue.
+type SqsMessage struct {
+	MessageId     string
+	ReceiptHandle string
+	Message
+}
+
+func (q *SqsQueue) Receive(maxMessages int, waitTime time.Duration) ([]SqsMessage, error) {
+	const op = "ReceiveMessage"
+
+	params := map[string]string{
+		"MaxNumberOfMessages": strconv.Itoa(maxMessages),
+		"WaitTimeSeconds":     strconv.Itoa(int(waitTime.Seconds())),
+	}
+
+	resp, err := q.queue.ReceiveMessageWithParameters(params)
+	if err != nil {
+		q.logger.WithFields(log.Fields{
+			"provider":   SQS_PROVIDER,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.name,
+			"op":         op,
+			"error":      err,
+		}).Error(err.Error())
+		q.stats.Incr(q.statsPrefix+statSqsErrorSuffix, 1)
+		return nil, err
+	}
+	if len(resp.Messages) == 0 {
+		return nil, nil
+	}
+
+	msgs := make([]SqsMessage, 0, len(resp.Messages))
+	for _, respMsg := range resp.Messages {
+		msg := new(SqsMessage)
+		if err := json.Unmarshal([]byte(respMsg.Body), &msg.Message); err != nil {
+			q.logger.WithFields(log.Fields{
+				"provider":   SQS_PROVIDER,
+				"region":     q.queue.Region.Name,
+				"queue_name": q.name,
+				"op":         op,
+				"message_id": respMsg.MessageId,
+				"error":      err,
+			}).Error(err.Error())
+			q.stats.Incr(q.statsPrefix+statSqsErrorSuffix, 1)
+			defer q.queue.DeleteMessageUsingReceiptHandle(respMsg.ReceiptHandle)
+		}
+
+		msg.MessageId = respMsg.MessageId
+		msg.ReceiptHandle = respMsg.ReceiptHandle
+		msgs = append(msgs, *msg)
+
+		q.logger.WithFields(log.Fields{
+			"provider":       SQS_PROVIDER,
+			"region":         q.queue.Region.Name,
+			"queue_name":     q.name,
+			"op":             op,
+			"message_id":     msg.MessageId,
+			"receipt_handle": msg.ReceiptHandle,
+		}).Info()
+		q.stats.Incr(q.statsPrefix+statSqsReceiveSuffix, 1)
+	}
+
+	return msgs, nil
+}
+
+func (q *SqsQueue) Delete(receiptHandle string) error {
+	const op = "DeleteMessage"
+
+	if _, err := q.queue.DeleteMessageUsingReceiptHandle(receiptHandle); err != nil {
+		q.logger.WithFields(log.Fields{
+			"provider":   SQS_PROVIDER,
+			"region":     q.queue.Region.Name,
+			"queue_name": q.name,
 			"op":         op,
 			"error":      err,
 		}).Error()
@@ -103,12 +204,12 @@ func (q *SqsQueue) Send(msg *Message) error {
 	}
 
 	q.logger.WithFields(log.Fields{
-		"provider":   SQS_PROVIDER,
-		"region":     q.Queue.Region,
-		"queue_name": q.Queue.Name,
-		"op":         op,
-		"message_id": resp.Id,
+		"provider":       SQS_PROVIDER,
+		"region":         q.queue.Region.Name,
+		"queue_name":     q.name,
+		"op":             op,
+		"receipt_handle": receiptHandle,
 	}).Info()
-	q.stats.Incr(q.statsPrefix+statSqsSendSuffix, 1)
+	q.stats.Incr(q.statsPrefix+statSqsDeleteSuffix, 1)
 	return nil
 }
