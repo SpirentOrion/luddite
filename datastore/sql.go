@@ -58,10 +58,10 @@ func (db *SqlDb) Exec(query string, args ...interface{}) (res sql.Result, err er
 		if s != nil {
 			data := s.Data()
 			data["op"] = op
+			data["query"] = query
 			if err != nil {
 				data["error"] = err
 			} else {
-				data["query"] = query
 				rows, _ := res.RowsAffected()
 				data["rows"] = rows
 			}
@@ -99,10 +99,9 @@ func (db *SqlDb) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 		if s != nil {
 			data := s.Data()
 			data["op"] = op
+			data["query"] = query
 			if err != nil {
 				data["error"] = err
-			} else {
-				data["query"] = query
 			}
 		}
 	})
@@ -174,10 +173,10 @@ func (tx *SqlTx) Exec(query string, args ...interface{}) (res sql.Result, err er
 		if s != nil {
 			data := s.Data()
 			data["op"] = op
+			data["query"] = query
 			if err != nil {
 				data["error"] = err
 			} else {
-				data["query"] = query
 				rows, _ := res.RowsAffected()
 				data["rows"] = rows
 			}
@@ -207,10 +206,9 @@ func (tx *SqlTx) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 		if s != nil {
 			data := s.Data()
 			data["op"] = op
+			data["query"] = query
 			if err != nil {
 				data["error"] = err
-			} else {
-				data["query"] = query
 			}
 		}
 	})
