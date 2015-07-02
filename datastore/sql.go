@@ -21,7 +21,7 @@ const (
 type SqlDb struct {
 	provider         string
 	name             string
-	logger           *log.Entry
+	logger           *log.Logger
 	stats            stats.Stats
 	statsPrefix      string
 	handleError      func(db *SqlDb, op, query string, err error)

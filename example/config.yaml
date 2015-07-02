@@ -10,7 +10,6 @@ service:
     stacks: true
     stack_size: 8192
   log:
-    service_name: service
     service_log_path:
     service_log_level: debug
     access_log_path:

@@ -68,7 +68,7 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 	return p, nil
 }
 
-func NewPostgresDb(params *PostgresParams, logger *log.Entry, stats stats.Stats) (*SqlDb, error) {
+func NewPostgresDb(params *PostgresParams, logger *log.Logger, stats stats.Stats) (*SqlDb, error) {
 	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
 		params.User, params.Password, params.DbName, params.Host, params.Port, params.SslMode))
 	if err != nil {

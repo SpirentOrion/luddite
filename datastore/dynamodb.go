@@ -58,13 +58,13 @@ func NewDynamoParams(params map[string]string) (*DynamoParams, error) {
 }
 
 type DynamoTable struct {
-	logger      *log.Entry
+	logger      *log.Logger
 	stats       stats.Stats
 	statsPrefix string
 	*dynamodb.Table
 }
 
-func NewDynamoTable(params *DynamoParams, logger *log.Entry, stats stats.Stats) (*DynamoTable, error) {
+func NewDynamoTable(params *DynamoParams, logger *log.Logger, stats stats.Stats) (*DynamoTable, error) {
 	auth, err := aws.GetAuth(params.AccessKey, params.SecretKey, "", time.Time{})
 	if err != nil {
 		return nil, err

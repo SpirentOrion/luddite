@@ -31,11 +31,11 @@ func ContextService(ctx context.Context) Service {
 
 // ContextLogger returns the Service's logger instance value from a
 // context.Context, if possible.
-func ContextLogger(ctx context.Context) (logger *log.Entry) {
+func ContextLogger(ctx context.Context) (logger *log.Logger) {
 	if s, _ := ctx.Value(contextServiceKey).(Service); s != nil {
 		logger = s.Logger()
 	} else {
-		logger = log.NewEntry(log.New())
+		logger = log.New()
 	}
 	return
 }

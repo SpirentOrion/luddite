@@ -27,8 +27,8 @@ const MAX_STACK_SIZE = 8 * 1024
 // handles panics that occur in HTTP method handlers and optionally
 // includes stack traces in 500 responses.
 type Bottom struct {
-	defaultLogger *log.Entry
-	accessLogger  *log.Entry
+	defaultLogger *log.Logger
+	accessLogger  *log.Logger
 	stats         stats.Stats
 	respStacks    bool
 	respStackSize int
@@ -36,7 +36,7 @@ type Bottom struct {
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Entry, stats stats.Stats) *Bottom {
+func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger, stats stats.Stats) *Bottom {
 	b := &Bottom{
 		defaultLogger: defaultLogger,
 		accessLogger:  accessLogger,

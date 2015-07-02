@@ -28,8 +28,6 @@ type ServiceConfig struct {
 		StackSize int `yaml:"stack_size"`
 	}
 	Log struct {
-		// ServiceName is the service name, included in all structured log records.
-		ServiceName string `yaml:"service_name"`
 		// ServiceLogPath sets the file path for the service log (written as JSON). If unset, defaults to stdout (written as text).
 		ServiceLogPath string `yaml:"service_log_path"`
 		// ServiceLogLevel sets the minimum log level for the service log, If unset, defaults to INFO.

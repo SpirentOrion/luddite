@@ -46,8 +46,8 @@ type Service interface {
 	// Config returns the service's ServiceConfig instance.
 	Config() *ServiceConfig
 
-	// Logger returns the service's log.Entry instance.
-	Logger() *log.Entry
+	// Logger returns the service's log.Logger instance.
+	Logger() *log.Logger
 
 	// Router returns the service's httprouter.Router instance.
 	Router() *httprouter.Router
@@ -63,8 +63,8 @@ type Service interface {
 
 type service struct {
 	config        *ServiceConfig
-	defaultLogger *log.Entry
-	accessLogger  *log.Entry
+	defaultLogger *log.Logger
+	accessLogger  *log.Logger
 	router        *httprouter.Router
 	statsdClient  *statsd.StatsdClient
 	stats         *statsd.StatsdBuffer
@@ -85,42 +85,34 @@ func NewService(config *ServiceConfig) (Service, error) {
 		router: httprouter.New(),
 	}
 
-	defaultLogger := log.New()
+	s.defaultLogger = log.New()
 	if config.Log.ServiceLogPath != "" {
-		openLogFile(defaultLogger, config.Log.ServiceLogPath)
-		defaultLogger.Formatter = &log.JSONFormatter{}
+		openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
+		s.defaultLogger.Formatter = &log.JSONFormatter{}
 	} else {
-		defaultLogger.Out = os.Stdout
+		s.defaultLogger.Out = os.Stdout
 	}
 
 	switch strings.ToLower(config.Log.ServiceLogLevel) {
 	case "debug":
-		defaultLogger.Level = log.DebugLevel
+		s.defaultLogger.Level = log.DebugLevel
 	default:
 		fallthrough
 	case "info":
-		defaultLogger.Level = log.InfoLevel
+		s.defaultLogger.Level = log.InfoLevel
 	case "warn":
-		defaultLogger.Level = log.WarnLevel
+		s.defaultLogger.Level = log.WarnLevel
 	case "error":
-		defaultLogger.Level = log.ErrorLevel
+		s.defaultLogger.Level = log.ErrorLevel
 	}
 
-	accessLogger := log.New()
+	s.accessLogger = log.New()
 	if config.Log.AccessLogPath != "" {
-		openLogFile(accessLogger, config.Log.AccessLogPath)
-		accessLogger.Formatter = &log.JSONFormatter{}
+		openLogFile(s.accessLogger, config.Log.AccessLogPath)
+		s.accessLogger.Formatter = &log.JSONFormatter{}
 	} else {
-		accessLogger.Out = os.Stdout
-		accessLogger.Level = log.DebugLevel
-	}
-
-	if config.Log.ServiceName != "" {
-		s.defaultLogger = defaultLogger.WithFields(log.Fields{"service": config.Log.ServiceName})
-		s.accessLogger = accessLogger.WithFields(log.Fields{"service": config.Log.ServiceName})
-	} else {
-		s.defaultLogger = log.NewEntry(defaultLogger)
-		s.accessLogger = log.NewEntry(accessLogger)
+		s.accessLogger.Out = os.Stdout
+		s.accessLogger.Level = log.DebugLevel
 	}
 
 	s.router.NotFound = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
@@ -219,7 +211,7 @@ func (s *service) Config() *ServiceConfig {
 	return s.config
 }
 
-func (s *service) Logger() *log.Entry {
+func (s *service) Logger() *log.Logger {
 	return s.defaultLogger
 }
 
