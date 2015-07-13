@@ -21,7 +21,9 @@ type ServiceConfig struct {
 		// AllowCredentials indicates whether the request can include user credentials like cookies or HTTP auth.
 		AllowCredentials bool `yaml:"allow_credentials"`
 	}
-	Debug struct {
+	// Credentials is a generic map of strings that may be used to store tokens, AWS keys, etc.
+	Credentials map[string]string
+	Debug       struct {
 		// Stacks, when true, causes stack traces to appear in 500 error responses.
 		Stacks bool
 		// StackSize sets an upper limit on the length of stack traces that appear in 500 error responses.
