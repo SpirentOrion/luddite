@@ -223,9 +223,9 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	})
 
 	// Update request/response metrics
-	stat := fmt.Sprintf("request.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
+	stat := fmt.Sprintf("request.http.%s", strings.ToLower(req.Method))
 	b.stats.Incr(stat, 1)
-	stat = fmt.Sprintf("response.http.%s%s.%d", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1), res.Status())
+	stat = fmt.Sprintf("response.http.%s.%d", strings.ToLower(req.Method), res.Status())
 	b.stats.Incr(stat, 1)
 }
 
