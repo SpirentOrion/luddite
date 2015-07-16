@@ -91,7 +91,7 @@ func NewPostgresDb(params *PostgresParams, logger *log.Logger, stats stats.Stats
 }
 
 func handlePostgresError(db *SqlDb, op, query string, err error) {
-	pgErr, ok := err.(pq.Error)
+	pgErr, ok := err.(*pq.Error)
 	if ok {
 		db.logger.WithFields(log.Fields{
 			"provider": db.provider,
@@ -103,7 +103,7 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 			"code":     pgErr.Code,
 			"detail":   pgErr.Detail,
 			"table":    pgErr.Table,
-		}).Error()
+		}).Error(err.Error())
 
 		db.stats.Incr(db.statsPrefix+statSqlErrorSuffix+string(pgErr.Code), 1)
 	} else {
@@ -113,14 +113,14 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 			"op":       op,
 			"query":    query,
 			"error":    err,
-		}).Error()
+		}).Error(err.Error())
 
 		db.stats.Incr(db.statsPrefix+statSqlErrorSuffix+"other", 1)
 	}
 }
 
 func shouldRetryPostgresError(db *SqlDb, err error) bool {
-	if pgErr, ok := err.(pq.Error); ok && pgErr.Code == PostgresErrorSerializationFailure {
+	if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == PostgresErrorSerializationFailure {
 		return true
 	}
 	return false

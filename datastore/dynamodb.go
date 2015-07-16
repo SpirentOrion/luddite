@@ -308,7 +308,7 @@ func (t *DynamoTable) handleError(op string, err error) {
 		"table_name": t.Name,
 		"op":         op,
 		"error":      err,
-	}).Error()
+	}).Error(err.Error())
 
 	dynErr, ok := err.(*dynamodb.Error)
 	if ok {
