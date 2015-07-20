@@ -17,6 +17,9 @@ const (
 	EcodeValidationFailed      = "VALIDATION_FAILED"
 	EcodeLocked                = "LOCKED"
 	EcodeUpdatePreempted       = "UPDATE_PREEMPTED"
+	EcodeInvalidViewName       = "INVALID_VIEW_NAME"
+	EcodeMissingViewParameter  = "MISSING_VIEW_PARAMETER"
+	EcodeInvalidViewParameter  = "INVALID_VIEW_PARAMETER"
 )
 
 var commonErrorMap = map[string]string{
@@ -31,6 +34,9 @@ var commonErrorMap = map[string]string{
 	EcodeValidationFailed:      "Validation failed: %s",
 	EcodeLocked:                "Lock error: %s",
 	EcodeUpdatePreempted:       "Update was preempted: %s",
+	EcodeInvalidViewName:       "Invalid view name",
+	EcodeMissingViewParameter:  "Missing view parameter: %s",
+	EcodeInvalidViewParameter:  "Invalid view parameter: %s",
 }
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
