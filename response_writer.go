@@ -1,6 +1,10 @@
 package luddite
 
-import "net/http"
+import (
+	"bufio"
+	"net"
+	"net/http"
+)
 
 // ResponseWriter is a wrapper around http.ResponseWriter that
 // provides extra information about the response.
@@ -68,4 +72,8 @@ func (rw *responseWriter) Flush() {
 	if ok {
 		flusher.Flush()
 	}
+}
+
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return rw.ResponseWriter.(http.Hijacker).Hijack()
 }
