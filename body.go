@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"mime"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -19,7 +20,8 @@ const (
 var formDecoder = schema.NewDecoder()
 
 func ReadRequest(req *http.Request, v interface{}) error {
-	switch ct := req.Header.Get(HeaderContentType); ct {
+	ct := req.Header.Get(HeaderContentType)
+	switch mt, _, _ := mime.ParseMediaType(ct); mt {
 	case ContentTypeWwwFormUrlencoded:
 		if err := req.ParseForm(); err != nil {
 			return NewError(nil, EcodeDeserializationFailed, err)

@@ -46,7 +46,7 @@ func (r *sampleResource) Id(value interface{}) string {
 
 func TestReadJson(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleJsonBody))
-	req.Header[HeaderContentType] = []string{ContentTypeJson}
+	req.Header[HeaderContentType] = []string{ContentTypeJson + "; charset=UTF-8"}
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
@@ -103,7 +103,7 @@ func TestWriteJson(t *testing.T) {
 
 func TestReadXml(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(sampleXmlBody))
-	req.Header[HeaderContentType] = []string{ContentTypeXml}
+	req.Header[HeaderContentType] = []string{ContentTypeXml + "; charset=UTF-8"}
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
