@@ -137,11 +137,9 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	}
 	s, _ := trace.New(traceId, TraceKindRequest, req.URL.Path)
 	if s != nil {
-		b.addResponseTraceId(rw, traceId)
 		s.ParentId = parentId
-	} else {
-		b.addResponseTraceId(rw, traceId)
 	}
+	b.addRequestResponseTraceIds(rw, req, traceId)
 
 	res := rw.(ResponseWriter)
 	trace.Run(s, func() {
@@ -240,6 +238,8 @@ func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64)
 	return
 }
 
-func (b *Bottom) addResponseTraceId(rw http.ResponseWriter, traceId int64) {
-	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
+func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId int64) {
+	traceIdStr := fmt.Sprint(traceId)
+	req.Header.Set(HeaderRequestId, traceIdStr)
+	rw.Header().Set(HeaderRequestId, traceIdStr)
 }
