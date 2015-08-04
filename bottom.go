@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	log "github.com/SpirentOrion/logrus"
 	"github.com/SpirentOrion/luddite/datastore"
@@ -110,6 +111,10 @@ func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger, s
 }
 
 func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *http.Request, next ContextHandlerFunc) {
+	// Start duration measurement ASAP
+	start := time.Now()
+	var latency time.Duration
+
 	// Don't allow panics to escape the bottom handler under any circumstances!
 	defer func() {
 		if rcv := recover(); rcv != nil {
@@ -163,6 +168,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					}
 				}
 				WriteResponse(rw, http.StatusInternalServerError, resp)
+				latency = time.Now().Sub(start)
 
 				b.accessLogger.WithFields(log.Fields{
 					"client_addr":   req.RemoteAddr,
@@ -175,7 +181,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					"user_agent":    req.UserAgent(),
 					"req_id":        traceId,
 					"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
-				}).Error()
+					"time_duration": fmt.Sprintf("%.1f", latency.Seconds()*1000),
+				}).Error("PANIC")
 
 				if s != nil {
 					data := s.Data()
@@ -193,6 +200,7 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 
 		// Log the request
 		status := res.Status()
+		latency = time.Now().Sub(start)
 		entry := b.accessLogger.WithFields(log.Fields{
 			"client_addr":   req.RemoteAddr,
 			"forwarded_for": req.Header.Get(HeaderForwardedFor),
@@ -204,11 +212,12 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			"user_agent":    req.UserAgent(),
 			"req_id":        traceId,
 			"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
+			"time_duration": fmt.Sprintf("%.1f", latency.Seconds()*1000),
 		})
 		if status/100 != 5 {
 			entry.Info()
 		} else {
-			entry.Error()
+			entry.Error(status)
 		}
 
 		// Annotate the trace
@@ -225,6 +234,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	b.stats.Incr(stat, 1)
 	stat = fmt.Sprintf("response.http.%s.%d", strings.ToLower(req.Method), res.Status())
 	b.stats.Incr(stat, 1)
+	stat = fmt.Sprintf("response.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
+	b.stats.PrecisionTiming(stat, latency)
 }
 
 func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {

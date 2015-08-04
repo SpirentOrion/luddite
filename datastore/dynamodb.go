@@ -13,19 +13,13 @@ import (
 )
 
 const (
-	statDynamoGetItemSuffix             = ".get_item"
-	statDynamoGetItemLatencySuffix      = ".get_item_latency"
-	statDynamoPutItemSuffix             = ".put_item"
-	statDynamoPutItemLatencySuffix      = ".put_item_latency"
-	statDynamoUpdateItemSuffix          = ".update_item"
-	statDynamoUpdateItemLatencySuffix   = ".update_item_latency"
-	statDynamoDeleteItemSuffix          = ".delete_item"
-	statDynamoDeleteItemLatencySuffix   = ".delete_item_latency"
-	statDynamoScanSuffix                = ".scan"
-	statDynamoScanLatencySuffix         = ".scan_latency"
-	statDynamoQueryOnIndexSuffix        = ".query_on_index"
-	statDynamoQueryOnIndexLatencySuffix = ".query_on_index_latency"
-	statDynamoErrorSuffix               = ".error."
+	statDynamoGetItemSuffix      = ".get_item"
+	statDynamoPutItemSuffix      = ".put_item"
+	statDynamoUpdateItemSuffix   = ".update_item"
+	statDynamoDeleteItemSuffix   = ".delete_item"
+	statDynamoScanSuffix         = ".scan"
+	statDynamoQueryOnIndexSuffix = ".query_on_index"
+	statDynamoErrorSuffix        = ".error."
 )
 
 // DynamoParams holds AWS connection and auth properties for
@@ -106,7 +100,7 @@ func (t *DynamoTable) GetItem(id string) (attrs map[string]*dynamodb.Attribute, 
 	})
 
 	t.stats.Incr(t.statsPrefix+statDynamoGetItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoGetItemLatencySuffix, latency)
+	t.stats.PrecisionTiming(t.statsPrefix+statDynamoGetItemSuffix, latency)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
@@ -156,7 +150,7 @@ func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute, condAttrs [
 	})
 
 	t.stats.Incr(t.statsPrefix+statDynamoPutItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoPutItemLatencySuffix, latency)
+	t.stats.PrecisionTiming(t.statsPrefix+statDynamoPutItemSuffix, latency)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -200,7 +194,7 @@ func (t *DynamoTable) UpdateItem(id string, attrs []dynamodb.Attribute, condAttr
 	})
 
 	t.stats.Incr(t.statsPrefix+statDynamoUpdateItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoUpdateItemLatencySuffix, latency)
+	t.stats.PrecisionTiming(t.statsPrefix+statDynamoUpdateItemSuffix, latency)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -227,7 +221,7 @@ func (t *DynamoTable) DeleteItem(id string) (ok bool, err error) {
 	})
 
 	t.stats.Incr(t.statsPrefix+statDynamoDeleteItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoDeleteItemLatencySuffix, latency)
+	t.stats.PrecisionTiming(t.statsPrefix+statDynamoDeleteItemSuffix, latency)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
