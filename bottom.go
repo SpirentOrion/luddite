@@ -181,8 +181,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 					"user_agent":    req.UserAgent(),
 					"req_id":        traceId,
 					"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
-					"time_duration": fmt.Sprintf("%.1f", latency.Seconds()*1000),
-				}).Error("PANIC")
+					"time_duration": fmt.Sprintf("%.3f", latency.Seconds()*1000),
+				}).Error()
 
 				if s != nil {
 					data := s.Data()
@@ -212,12 +212,12 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			"user_agent":    req.UserAgent(),
 			"req_id":        traceId,
 			"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
-			"time_duration": fmt.Sprintf("%.1f", latency.Seconds()*1000),
+			"time_duration": fmt.Sprintf("%.3f", latency.Seconds()*1000),
 		})
 		if status/100 != 5 {
 			entry.Info()
 		} else {
-			entry.Error(status)
+			entry.Error()
 		}
 
 		// Annotate the trace
@@ -234,8 +234,6 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	b.stats.Incr(stat, 1)
 	stat = fmt.Sprintf("response.http.%s.%d", strings.ToLower(req.Method), res.Status())
 	b.stats.Incr(stat, 1)
-	stat = fmt.Sprintf("response.http.%s%s", strings.ToLower(req.Method), strings.Replace(req.URL.Path, "/", ".", -1))
-	b.stats.PrecisionTiming(stat, latency)
 }
 
 func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
