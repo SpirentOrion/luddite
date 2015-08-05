@@ -10,10 +10,12 @@ import (
 )
 
 const (
-	statSqlExecSuffix  = ".exec"
-	statSqlQuerySuffix = ".query"
-	statSqlTxSuffix    = ".tx"
-	statSqlErrorSuffix = ".error."
+	statSqlExecSuffix         = ".exec"
+	statSqlExecLatencySuffix  = ".exec_latency"
+	statSqlQuerySuffix        = ".query"
+	statSqlQueryLatencySuffix = ".query_latency"
+	statSqlTxSuffix           = ".tx"
+	statSqlErrorSuffix        = ".error."
 )
 
 type SqlDb struct {
@@ -67,7 +69,7 @@ func (db *SqlDb) Exec(query string, args ...interface{}) (res sql.Result, err er
 	})
 
 	db.stats.Incr(db.statsPrefix+statSqlExecSuffix, 1)
-	db.stats.PrecisionTiming(db.statsPrefix+statSqlExecSuffix, latency)
+	db.stats.PrecisionTiming(db.statsPrefix+statSqlExecLatencySuffix, latency)
 	if err != nil {
 		db.handleError(db, op, query, err)
 	}
@@ -105,7 +107,7 @@ func (db *SqlDb) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	})
 
 	db.stats.Incr(db.statsPrefix+statSqlQuerySuffix, 1)
-	db.stats.PrecisionTiming(db.statsPrefix+statSqlQuerySuffix, latency)
+	db.stats.PrecisionTiming(db.statsPrefix+statSqlQueryLatencySuffix, latency)
 	if err != nil {
 		db.handleError(db, op, query, err)
 	}
@@ -182,7 +184,7 @@ func (tx *SqlTx) Exec(query string, args ...interface{}) (res sql.Result, err er
 	})
 
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlExecSuffix, 1)
-	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlExecSuffix, latency)
+	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlExecLatencySuffix, latency)
 	if err != nil {
 		if tx.db.shouldRetryError(tx.db, err) {
 			tx.Tx.Rollback()
@@ -212,7 +214,7 @@ func (tx *SqlTx) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	})
 
 	tx.db.stats.Incr(tx.db.statsPrefix+statSqlQuerySuffix, 1)
-	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlQuerySuffix, latency)
+	tx.db.stats.PrecisionTiming(tx.db.statsPrefix+statSqlQueryLatencySuffix, latency)
 	if err != nil {
 		if tx.db.shouldRetryError(tx.db, err) {
 			tx.Tx.Rollback()
@@ -249,7 +251,7 @@ func (stmt *SqlStmt) Exec(args ...interface{}) (res sql.Result, err error) {
 	})
 
 	stmt.db.stats.Incr(stmt.db.statsPrefix+statSqlExecSuffix, 1)
-	stmt.db.stats.PrecisionTiming(stmt.db.statsPrefix+statSqlExecSuffix, latency)
+	stmt.db.stats.PrecisionTiming(stmt.db.statsPrefix+statSqlExecLatencySuffix, latency)
 	if err != nil {
 		stmt.db.handleError(stmt.db, op, "", err)
 	}
@@ -275,7 +277,7 @@ func (stmt *SqlStmt) Query(args ...interface{}) (rows *sql.Rows, err error) {
 	})
 
 	stmt.db.stats.Incr(stmt.db.statsPrefix+statSqlQuerySuffix, 1)
-	stmt.db.stats.PrecisionTiming(stmt.db.statsPrefix+statSqlQuerySuffix, latency)
+	stmt.db.stats.PrecisionTiming(stmt.db.statsPrefix+statSqlQueryLatencySuffix, latency)
 	if err != nil {
 		stmt.db.handleError(stmt.db, op, "", err)
 	}
