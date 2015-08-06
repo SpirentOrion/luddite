@@ -121,9 +121,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			stack := make([]byte, MAX_STACK_SIZE)
 			stack = stack[:runtime.Stack(stack, false)]
 			b.defaultLogger.WithFields(log.Fields{
-				"error": rcv,
 				"stack": string(stack),
-			}).Error("PANIC")
+			}).Error(rcv)
 		}
 	}()
 
@@ -155,9 +154,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 				stack := make([]byte, MAX_STACK_SIZE)
 				stack = stack[:runtime.Stack(stack, false)]
 				b.defaultLogger.WithFields(log.Fields{
-					"error": rcv,
 					"stack": string(stack),
-				}).Error("PANIC")
+				}).Error(rcv)
 
 				resp := NewError(nil, EcodeInternal, rcv)
 				if b.respStacks {
