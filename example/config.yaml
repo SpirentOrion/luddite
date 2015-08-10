@@ -14,10 +14,8 @@ service:
     service_log_level: debug
     access_log_path:
   metrics:
-    enabled: false
-    server: 127.0.0.1:8125
-    prefix: service.
-    interval: 2s
+    enabled: true
+    uri_path: /metrics
   schema:
     enabled: true
     uri_path: /schema

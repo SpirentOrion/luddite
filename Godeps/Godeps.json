@@ -6,6 +6,11 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "bitbucket.org/ww/goautoneg",
+			"Comment": "null-5",
+			"Rev": "75cd24fc2f2c2a2088577d12123ddee5f54e0675"
+		},
+		{
 			"ImportPath": "github.com/K-Phoen/negotiation",
 			"Rev": "416fb5f2f78840726e34b2b899b913684040dc7e"
 		},
@@ -23,6 +28,10 @@
 			"Rev": "b07f2eef50eef72031ac6a62a7598c5e69577ada"
 		},
 		{
+			"ImportPath": "github.com/beorn7/perks/quantile",
+			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
+		},
+		{
 			"ImportPath": "github.com/bitly/go-simplejson",
 			"Comment": "v0.4.3-30-g18db6e6",
 			"Rev": "18db6e68d8fd9cbf2e8ebe4c81a78b96fd9bf05a"
@@ -34,6 +43,10 @@
 		{
 			"ImportPath": "github.com/goamz/goamz/dynamodb",
 			"Rev": "ad637a587dd8314770a1084481dd7b5d4fa1232f"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "73aaaa9eb61d74fbf7e256ca586a3a565b308eea"
 		},
 		{
 			"ImportPath": "github.com/gorilla/schema",
@@ -49,8 +62,32 @@
 			"Rev": "93e9980741c9e593411b94e07d5bad8cfb4809db"
 		},
 		{
-			"ImportPath": "github.com/quipo/statsd",
-			"Rev": "b16c3be8a03e3c39a2d9c669b8f13f8876de61cd"
+			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"Rev": "fc2b8d3a73c4867e51861bbdd5ae3c1f0869dd6a"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/model",
+			"Comment": "0.7.0-14-g61d4487",
+			"Rev": "61d4487606ff7b5fe968c128cdd15a003afdd2dd"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/prometheus",
+			"Comment": "0.7.0-14-g61d4487",
+			"Rev": "61d4487606ff7b5fe968c128cdd15a003afdd2dd"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/text",
+			"Comment": "0.7.0-14-g61d4487",
+			"Rev": "61d4487606ff7b5fe968c128cdd15a003afdd2dd"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_model/go",
+			"Comment": "model-0.0.2-12-gfa8ad6f",
+			"Rev": "fa8ad6fec33561be4280a8f0514318c79d7f6cb6"
+		},
+		{
+			"ImportPath": "github.com/prometheus/procfs",
+			"Rev": "c91d8eefde16bd047416409eb56353ea84a186e4"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",

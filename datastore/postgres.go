@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	log "github.com/SpirentOrion/logrus"
-	"github.com/SpirentOrion/luddite/stats"
 	"github.com/lib/pq"
 )
 
@@ -68,7 +67,7 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 	return p, nil
 }
 
-func NewPostgresDb(params *PostgresParams, logger *log.Logger, stats stats.Stats) (*SqlDb, error) {
+func NewPostgresDb(params *PostgresParams, logger *log.Logger) (*SqlDb, error) {
 	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
 		params.User, params.Password, params.DbName, params.Host, params.Port, params.SslMode))
 	if err != nil {
@@ -80,10 +79,9 @@ func NewPostgresDb(params *PostgresParams, logger *log.Logger, stats stats.Stats
 
 	return &SqlDb{
 		provider:         POSTGRES_PROVIDER,
-		name:             fmt.Sprintf("%s{%s:%d/%s}", POSTGRES_PROVIDER, params.Host, params.Port, params.DbName),
+		host:             params.Host,
+		name:             params.DbName,
 		logger:           logger,
-		stats:            stats,
-		statsPrefix:      fmt.Sprintf("datastore.%s.%s.", POSTGRES_PROVIDER, params.DbName),
 		handleError:      handlePostgresError,
 		shouldRetryError: shouldRetryPostgresError,
 		DB:               db,
@@ -94,28 +92,34 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 	pgErr, ok := err.(*pq.Error)
 	if ok {
 		db.logger.WithFields(log.Fields{
-			"provider": db.provider,
-			"name":     db.name,
-			"op":       op,
-			"query":    query,
-			"error":    err,
-			"severity": pgErr.Severity,
-			"code":     pgErr.Code,
-			"detail":   pgErr.Detail,
-			"table":    pgErr.Table,
-		}).Error(err.Error())
+			"provider":       db.provider,
+			"name":           db.name,
+			"op":             op,
+			"query":          query,
+			"severity":       pgErr.Severity,
+			"code":           pgErr.Code,
+			"detail":         pgErr.Detail,
+			"hint":           pgErr.Hint,
+			"position":       pgErr.Position,
+			"where":          pgErr.Where,
+			"schema":         pgErr.Schema,
+			"table":          pgErr.Table,
+			"column":         pgErr.Column,
+			"data_type_name": pgErr.DataTypeName,
+			"constraint":     pgErr.Constraint,
+			"file":           pgErr.File,
+			"line":           pgErr.Line,
+			"routine":        pgErr.Routine,
+		}).Error(pgErr.Message)
 
-		db.stats.Incr(db.statsPrefix+statSqlErrorSuffix+string(pgErr.Code), 1)
+		sqlErrors.WithLabelValues(db.host, db.name, string(pgErr.Code)).Inc()
 	} else {
 		db.logger.WithFields(log.Fields{
 			"provider": db.provider,
 			"name":     db.name,
 			"op":       op,
 			"query":    query,
-			"error":    err,
 		}).Error(err.Error())
-
-		db.stats.Incr(db.statsPrefix+statSqlErrorSuffix+"other", 1)
 	}
 }
 

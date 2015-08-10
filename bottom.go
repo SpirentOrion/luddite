@@ -5,12 +5,10 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	log "github.com/SpirentOrion/logrus"
 	"github.com/SpirentOrion/luddite/datastore"
-	"github.com/SpirentOrion/luddite/stats"
 	"github.com/SpirentOrion/trace"
 	"github.com/SpirentOrion/trace/dynamorec"
 	"github.com/SpirentOrion/trace/yamlrec"
@@ -30,18 +28,16 @@ const MAX_STACK_SIZE = 8 * 1024
 type Bottom struct {
 	defaultLogger *log.Logger
 	accessLogger  *log.Logger
-	stats         stats.Stats
 	respStacks    bool
 	respStackSize int
 	cors          *cors.Cors
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger, stats stats.Stats) *Bottom {
+func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger) *Bottom {
 	b := &Bottom{
 		defaultLogger: defaultLogger,
 		accessLogger:  accessLogger,
-		stats:         stats,
 		respStacks:    config.Debug.Stacks,
 		respStackSize: config.Debug.StackSize,
 	}
@@ -226,12 +222,6 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			data["resp_size"] = res.Size()
 		}
 	})
-
-	// Update request/response metrics
-	stat := fmt.Sprintf("request.http.%s", strings.ToLower(req.Method))
-	b.stats.Incr(stat, 1)
-	stat = fmt.Sprintf("response.http.%s.%d", strings.ToLower(req.Method), res.Status())
-	b.stats.Incr(stat, 1)
 }
 
 func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {

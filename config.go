@@ -2,7 +2,6 @@ package luddite
 
 import (
 	"io/ioutil"
-	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -38,14 +37,10 @@ type ServiceConfig struct {
 		AccessLogPath string `yaml:"access_log_path"`
 	}
 	Metrics struct {
-		// Enabled, when true, enables the service's statsd client.
+		// Enabled, when true, enables the service's prometheus client.
 		Enabled bool
-		// Server is the address:port of the statsd server. Defaults to "127.0.0.1:8125".
-		Server string
-		// Prefix sets the statsd client prefix. Defaults to "%HOST%.".
-		Prefix string
-		// Interval sets the statsd client flush interface. Defaults to 2s.
-		Interval time.Duration
+		// UriPath sets the metrics path. Defaults to "/metrics".
+		UriPath string `yaml:"uri_path"`
 	}
 	Schema struct {
 		// Enabled, when true, self-serve the service's own schema.
