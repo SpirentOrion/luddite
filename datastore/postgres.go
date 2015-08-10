@@ -112,7 +112,7 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 			"routine":        pgErr.Routine,
 		}).Error(pgErr.Message)
 
-		sqlErrors.WithLabelValues(db.name, string(pgErr.Code)).Inc()
+		sqlErrors.WithLabelValues(db.host, db.name, string(pgErr.Code)).Inc()
 	} else {
 		db.logger.WithFields(log.Fields{
 			"provider": db.provider,
