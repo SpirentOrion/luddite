@@ -9,23 +9,15 @@ import (
 	"path"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/SpirentOrion/httprouter"
 	log "github.com/SpirentOrion/logrus"
-	"github.com/SpirentOrion/luddite/stats"
-	"github.com/quipo/statsd"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
 
 const (
-	DEFAULT_STATSD_SERVER   = "127.0.0.1:8125"
-	DEFAULT_STATSD_PREFIX   = "%HOST%."
-	DEFAULT_STATSD_INTERVAL = 2 * time.Second
-)
-
-var (
-	nullStats = &stats.NullStats{}
+	DEFAULT_METRICS_URI_PATH = "/metrics"
 )
 
 // Service is an interface that implements a standalone RESTful web service.
@@ -52,9 +44,6 @@ type Service interface {
 	// Router returns the service's httprouter.Router instance.
 	Router() *httprouter.Router
 
-	// Stats returns the service's Stats instance.
-	Stats() stats.Stats
-
 	// Run is a convenience function that runs the service as an
 	// HTTP server. The address is taken from the ServiceConfig
 	// passed to NewService.
@@ -66,8 +55,6 @@ type service struct {
 	defaultLogger *log.Logger
 	accessLogger  *log.Logger
 	router        *httprouter.Router
-	statsdClient  *statsd.StatsdClient
-	stats         *statsd.StatsdBuffer
 	handlers      []Handler
 	middleware    *middleware
 	schema        *SchemaHandler
@@ -123,23 +110,6 @@ func NewService(config *ServiceConfig) (Service, error) {
 		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
 
-	// Create the statsd client
-	if s.config.Metrics.Enabled {
-		if s.config.Metrics.Server == "" {
-			s.config.Metrics.Server = DEFAULT_STATSD_SERVER
-		}
-		if s.config.Metrics.Prefix == "" {
-			s.config.Metrics.Prefix = DEFAULT_STATSD_PREFIX
-		}
-		if s.config.Metrics.Interval == 0 {
-			s.config.Metrics.Interval = DEFAULT_STATSD_INTERVAL
-		}
-
-		s.statsdClient = statsd.NewStatsdClient(s.config.Metrics.Server, s.config.Metrics.Prefix)
-		s.stats = statsd.NewStatsdBuffer(s.config.Metrics.Interval, s.statsdClient)
-		s.stats.Logger = s.defaultLogger
-	}
-
 	// Create default middleware handlers
 	bottom, err := s.newBottomHandler()
 	if err != nil {
@@ -161,6 +131,9 @@ func NewService(config *ServiceConfig) (Service, error) {
 	s.middleware = buildMiddleware(s.handlers)
 
 	// Install default http handlers
+	if s.config.Metrics.Enabled {
+		s.addMetricsRoute()
+	}
 	if config.Schema.Enabled {
 		s.addSchemaRoutes()
 	}
@@ -219,14 +192,6 @@ func (s *service) Router() *httprouter.Router {
 	return s.router
 }
 
-func (s *service) Stats() stats.Stats {
-	if s.stats != nil {
-		return s.stats
-	} else {
-		return nullStats
-	}
-}
-
 func (s *service) Run() error {
 	// Add the router as the final middleware handler
 	h, err := s.newRouterHandler()
@@ -235,23 +200,23 @@ func (s *service) Run() error {
 	}
 	s.AddHandler(h)
 
-	// Arrange for shutdown of the buffered statsd client
-	if s.stats != nil {
-		defer s.stats.Close()
+	// Serve HTTP or HTTPS, depending on config
+	var middleware http.Handler = s.middleware
+	if s.config.Metrics.Enabled {
+		middleware = prometheus.InstrumentHandler("service", middleware)
 	}
 
-	// Serve HTTP or HTTPS, depending on config
 	if s.config.Transport.TLS {
 		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
-		return http.ListenAndServeTLS(s.config.Addr, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath, s.middleware)
+		return http.ListenAndServeTLS(s.config.Addr, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath, middleware)
 	} else {
 		s.defaultLogger.Debugf("HTTP listening on %s", s.config.Addr)
-		return http.ListenAndServe(s.config.Addr, s.middleware)
+		return http.ListenAndServe(s.config.Addr, middleware)
 	}
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
-	return NewBottom(s.config, s.defaultLogger, s.accessLogger, s.Stats()), nil
+	return NewBottom(s.config, s.defaultLogger, s.accessLogger), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
@@ -274,6 +239,16 @@ func (s *service) newRouterHandler() (Handler, error) {
 		// No more middleware handlers: further dispatch happens via httprouter
 		s.router.HandleHTTP(ctx, rw, r)
 	}), nil
+}
+
+func (s *service) addMetricsRoute() {
+	uriPath := s.config.Metrics.UriPath
+	if uriPath == "" {
+		uriPath = DEFAULT_METRICS_URI_PATH
+	}
+
+	h := prometheus.Handler()
+	s.router.GET(uriPath, func(_ context.Context, rw http.ResponseWriter, r *http.Request) { h.ServeHTTP(rw, r) })
 }
 
 func (s *service) addSchemaRoutes() {

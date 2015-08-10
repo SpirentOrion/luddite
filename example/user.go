@@ -81,9 +81,6 @@ func (r *userResource) Create(ctx context.Context, req *http.Request, value inte
 		"name":  u.Name,
 	}).Info()
 
-	stats := luddite.ContextStats(ctx)
-	stats.Incr("users.created", 1)
-
 	return http.StatusCreated, u.SafeExport()
 }
 
@@ -103,9 +100,6 @@ func (r *userResource) Update(ctx context.Context, req *http.Request, id string,
 		"event": "UserUpdated",
 		"name":  u.Name,
 	}).Info()
-
-	stats := luddite.ContextStats(ctx)
-	stats.Incr("users.updated", 1)
 
 	return http.StatusOK, u.SafeExport()
 }

@@ -6,27 +6,43 @@ import (
 	"time"
 
 	log "github.com/SpirentOrion/logrus"
-	"github.com/SpirentOrion/luddite/stats"
 	"github.com/SpirentOrion/trace"
 	"github.com/goamz/goamz/aws"
 	"github.com/goamz/goamz/dynamodb"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-const (
-	statDynamoGetItemSuffix             = ".get_item"
-	statDynamoGetItemLatencySuffix      = ".get_item_latency"
-	statDynamoPutItemSuffix             = ".put_item"
-	statDynamoPutItemLatencySuffix      = ".put_item_latency"
-	statDynamoUpdateItemSuffix          = ".update_item"
-	statDynamoUpdateItemLatencySuffix   = ".update_item_latency"
-	statDynamoDeleteItemSuffix          = ".delete_item"
-	statDynamoDeleteItemLatencySuffix   = ".delete_item_latency"
-	statDynamoScanSuffix                = ".scan"
-	statDynamoScanLatencySuffix         = ".scan_latency"
-	statDynamoQueryOnIndexSuffix        = ".query_on_index"
-	statDynamoQueryOnIndexLatencySuffix = ".query_on_index_latency"
-	statDynamoErrorSuffix               = ".error."
+var (
+	dynamoOps = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dynamodb_operations_total",
+			Help: "How many DynamoDB operations occurred, partitioned by region, table, and operation.",
+		},
+		[]string{"region", "table", "operation"},
+	)
+
+	dynamoOpLatencies = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "dynamodb_operation_latency_milliseconds",
+			Help: "DynamoDB operation latencies in milliseconds.",
+		},
+		[]string{"region", "table", "operation"},
+	)
+
+	dynamoErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dynamodb_errors_total",
+			Help: "How many DynamoDB errors occurred, partitioned by region, table, and error code.",
+		},
+		[]string{"region", "table", "error_code"},
+	)
 )
+
+func init() {
+	prometheus.MustRegister(dynamoOps)
+	prometheus.MustRegister(dynamoOpLatencies)
+	prometheus.MustRegister(dynamoErrors)
+}
 
 // DynamoParams holds AWS connection and auth properties for
 // DynamoDB-based datastores.
@@ -58,13 +74,11 @@ func NewDynamoParams(params map[string]string) (*DynamoParams, error) {
 }
 
 type DynamoTable struct {
-	logger      *log.Logger
-	stats       stats.Stats
-	statsPrefix string
+	logger *log.Logger
 	*dynamodb.Table
 }
 
-func NewDynamoTable(params *DynamoParams, logger *log.Logger, stats stats.Stats) (*DynamoTable, error) {
+func NewDynamoTable(params *DynamoParams, logger *log.Logger) (*DynamoTable, error) {
 	auth, err := aws.GetAuth(params.AccessKey, params.SecretKey, "", time.Time{})
 	if err != nil {
 		return nil, err
@@ -75,10 +89,8 @@ func NewDynamoTable(params *DynamoParams, logger *log.Logger, stats stats.Stats)
 	}
 	table := server.NewTable(params.TableName, dynamodb.PrimaryKey{KeyAttribute: dynamodb.NewStringAttribute("id", "")})
 	return &DynamoTable{
-		logger:      logger,
-		stats:       stats,
-		statsPrefix: fmt.Sprintf("datastore.%s.%s.%s.", DYNAMODB_PROVIDER, params.Region, params.TableName),
-		Table:       table,
+		logger: logger,
+		Table:  table,
 	}, nil
 }
 
@@ -105,8 +117,8 @@ func (t *DynamoTable) GetItem(id string) (attrs map[string]*dynamodb.Attribute, 
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoGetItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoGetItemLatencySuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
@@ -155,8 +167,8 @@ func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute, condAttrs [
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoPutItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoPutItemLatencySuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -199,8 +211,8 @@ func (t *DynamoTable) UpdateItem(id string, attrs []dynamodb.Attribute, condAttr
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoUpdateItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoUpdateItemLatencySuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -226,8 +238,8 @@ func (t *DynamoTable) DeleteItem(id string) (ok bool, err error) {
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoDeleteItemSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoDeleteItemLatencySuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
@@ -261,8 +273,8 @@ func (t *DynamoTable) Scan(comps []dynamodb.AttributeComparison) (attrs []map[st
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoScanSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoScanSuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		t.handleError(op, err)
 		attrs = nil
@@ -292,8 +304,8 @@ func (t *DynamoTable) QueryOnIndex(comps []dynamodb.AttributeComparison, indexNa
 		}
 	})
 
-	t.stats.Incr(t.statsPrefix+statDynamoQueryOnIndexSuffix, 1)
-	t.stats.PrecisionTiming(t.statsPrefix+statDynamoQueryOnIndexSuffix, latency)
+	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
 	if err != nil {
 		t.handleError(op, err)
 		return
@@ -302,18 +314,25 @@ func (t *DynamoTable) QueryOnIndex(comps []dynamodb.AttributeComparison, indexNa
 }
 
 func (t *DynamoTable) handleError(op string, err error) {
-	t.logger.WithFields(log.Fields{
-		"provider":   DYNAMODB_PROVIDER,
-		"region":     t.Server.Region,
-		"table_name": t.Name,
-		"op":         op,
-		"error":      err,
-	}).Error(err.Error())
-
 	dynErr, ok := err.(*dynamodb.Error)
 	if ok {
-		t.stats.Incr(t.statsPrefix+statDynamoErrorSuffix+dynErr.Code, 1)
+		t.logger.WithFields(log.Fields{
+			"provider":    DYNAMODB_PROVIDER,
+			"region":      t.Server.Region.Name,
+			"table_name":  t.Name,
+			"op":          op,
+			"status_code": dynErr.StatusCode,
+			"status":      dynErr.Status,
+			"code":        dynErr.Code,
+		}).Error(dynErr.Message)
+
+		dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, dynErr.Code).Inc()
 	} else {
-		t.stats.Incr(t.statsPrefix+statDynamoErrorSuffix+"other", 1)
+		t.logger.WithFields(log.Fields{
+			"provider":   DYNAMODB_PROVIDER,
+			"region":     t.Server.Region.Name,
+			"table_name": t.Name,
+			"op":         op,
+		}).Error(err.Error())
 	}
 }
