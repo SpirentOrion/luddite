@@ -118,7 +118,7 @@ func (t *DynamoTable) GetItem(id string) (attrs map[string]*dynamodb.Attribute, 
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
@@ -168,7 +168,7 @@ func (t *DynamoTable) PutItem(id string, attrs []dynamodb.Attribute, condAttrs [
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -212,7 +212,7 @@ func (t *DynamoTable) UpdateItem(id string, attrs []dynamodb.Attribute, condAttr
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		t.handleError(op, err)
 	}
@@ -239,7 +239,7 @@ func (t *DynamoTable) DeleteItem(id string) (ok bool, err error) {
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		if err == dynamodb.ErrNotFound {
 			err = nil
@@ -274,7 +274,7 @@ func (t *DynamoTable) Scan(comps []dynamodb.AttributeComparison) (attrs []map[st
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		t.handleError(op, err)
 		attrs = nil
@@ -305,7 +305,7 @@ func (t *DynamoTable) QueryOnIndex(comps []dynamodb.AttributeComparison, indexNa
 	})
 
 	dynamoOps.WithLabelValues(t.Server.Region.Name, t.Name, op).Inc()
-	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() / 1000)
+	dynamoOpLatencies.WithLabelValues(t.Server.Region.Name, t.Name, op).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		t.handleError(op, err)
 		return

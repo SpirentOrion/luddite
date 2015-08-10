@@ -62,7 +62,7 @@ func (db *SqlDb) Begin() (*SqlTx, error) {
 	latency := time.Since(start)
 
 	sqlOps.WithLabelValues(db.host, db.name).Inc()
-	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (db *SqlDb) Exec(query string, args ...interface{}) (res sql.Result, err er
 	})
 
 	sqlOps.WithLabelValues(db.host, db.name).Inc()
-	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		db.handleError(db, op, query, err)
 	}
@@ -134,7 +134,7 @@ func (db *SqlDb) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	})
 
 	sqlOps.WithLabelValues(db.host, db.name).Inc()
-	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(db.host, db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		db.handleError(db, op, query, err)
 	}
@@ -169,7 +169,7 @@ func (tx *SqlTx) Commit() (err error) {
 	})
 
 	sqlOps.WithLabelValues(tx.db.host, tx.db.name).Inc()
-	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		if tx.db.shouldRetryError(tx.db, err) {
 			tx.Tx.Rollback()
@@ -213,7 +213,7 @@ func (tx *SqlTx) Exec(query string, args ...interface{}) (res sql.Result, err er
 	})
 
 	sqlOps.WithLabelValues(tx.db.host, tx.db.name).Inc()
-	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		if tx.db.shouldRetryError(tx.db, err) {
 			tx.Tx.Rollback()
@@ -243,7 +243,7 @@ func (tx *SqlTx) Query(query string, args ...interface{}) (rows *sql.Rows, err e
 	})
 
 	sqlOps.WithLabelValues(tx.db.host, tx.db.name).Inc()
-	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(tx.db.host, tx.db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		if tx.db.shouldRetryError(tx.db, err) {
 			tx.Tx.Rollback()
@@ -280,7 +280,7 @@ func (stmt *SqlStmt) Exec(args ...interface{}) (res sql.Result, err error) {
 	})
 
 	sqlOps.WithLabelValues(stmt.db.host, stmt.db.name).Inc()
-	sqlOpLatencies.WithLabelValues(stmt.db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(stmt.db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		stmt.db.handleError(stmt.db, op, "", err)
 	}
@@ -306,7 +306,7 @@ func (stmt *SqlStmt) Query(args ...interface{}) (rows *sql.Rows, err error) {
 	})
 
 	sqlOps.WithLabelValues(stmt.db.host, stmt.db.name).Inc()
-	sqlOpLatencies.WithLabelValues(stmt.db.name).Observe(latency.Seconds() / 1000)
+	sqlOpLatencies.WithLabelValues(stmt.db.name).Observe(latency.Seconds() * 1000)
 	if err != nil {
 		stmt.db.handleError(stmt.db, op, "", err)
 	}
