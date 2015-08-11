@@ -247,7 +247,7 @@ func (s *service) addMetricsRoute() {
 		uriPath = DEFAULT_METRICS_URI_PATH
 	}
 
-	h := prometheus.Handler()
+	h := prometheus.UninstrumentedHandler()
 	s.router.GET(uriPath, func(_ context.Context, rw http.ResponseWriter, r *http.Request) { h.ServeHTTP(rw, r) })
 }
 
