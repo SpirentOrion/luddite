@@ -2,6 +2,14 @@ package datastore
 
 import "fmt"
 
+type AuthorizationError struct {
+	ErrorString string
+}
+
+func (e *AuthorizationError) Error() string {
+	return e.ErrorString
+}
+
 type UpdatePreemptedError struct {
 	OldSerial int64
 	NewSerial int64
