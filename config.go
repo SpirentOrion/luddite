@@ -65,7 +65,7 @@ type ServiceConfig struct {
 		Params map[string]string
 	}
 	Transport struct {
-		// Tls, causes the service to listen using HTTPS.
+		// Tls, when true, causes the service to listen using HTTPS.
 		TLS bool `yaml:"tls"`
 		// CertFilePath sets the path to the server's certificate file.
 		CertFilePath string `yaml:"cert_file_path"`

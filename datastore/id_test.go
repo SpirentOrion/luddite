@@ -5,10 +5,29 @@ import (
 	"testing"
 )
 
-func TestGlobalId(t *testing.T) {
+func TestNewGlobalId(t *testing.T) {
 	id := NewGlobalId()
 	if len(id) != 32 || strings.Map(stripHexDigits, id) != "" {
 		t.Errorf("expected GUID-like value, got: %s", id)
+	}
+}
+
+func TestIsValidGlobalId(t *testing.T) {
+	if !IsValidGlobalId(NewGlobalId()) {
+		t.Error("expected valid id")
+	}
+
+	if IsValidGlobalId("") {
+		t.Error("expected invalid id")
+	}
+	if IsValidGlobalId("foo") {
+		t.Error("expected invalid id")
+	}
+	if IsValidGlobalId(strings.ToUpper(NewGlobalId())) {
+		t.Error("expected invalid id")
+	}
+	if IsValidGlobalId(NewGlobalId() + "0") {
+		t.Error("expected invalid id")
 	}
 }
 
