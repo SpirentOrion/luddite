@@ -13,6 +13,8 @@ const (
 	HeaderLocation          = "Location"
 	HeaderRequestId         = "X-Request-Id"
 	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
+	HeaderSpirentNextLink   = "X-Spirent-Next-Link"
+	HeaderSpirentPrevLink   = "X-Spirent-Prev-Link"
 )
 
 func RequestBearerToken(r *http.Request) (token string) {
