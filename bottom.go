@@ -138,6 +138,10 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 	s, _ := trace.New(traceId, TraceKindRequest, req.URL.Path)
 	if s != nil {
 		s.ParentId = parentId
+		if req.URL.RawQuery != "" {
+			data := s.Data()
+			data["query"] = req.URL.RawQuery
+		}
 	}
 	b.addRequestResponseTraceIds(rw, req, traceId)
 

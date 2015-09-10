@@ -2,6 +2,7 @@ package luddite
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -14,7 +15,6 @@ const (
 	HeaderRequestId         = "X-Request-Id"
 	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
 	HeaderSpirentNextLink   = "X-Spirent-Next-Link"
-	HeaderSpirentPrevLink   = "X-Spirent-Prev-Link"
 )
 
 func RequestBearerToken(r *http.Request) (token string) {
@@ -32,4 +32,16 @@ func RequestApiVersion(r *http.Request, defaultVersion int) (version int) {
 		}
 	}
 	return
+}
+
+func RequestQueryCursor(r *http.Request) string {
+	return r.URL.Query().Get("cursor")
+}
+
+func RequestNextLink(r *http.Request, cursor string) *url.URL {
+	next := *r.URL
+	v := next.Query()
+	v.Set("cursor", cursor)
+	next.RawQuery = v.Encode()
+	return &next
 }

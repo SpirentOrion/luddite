@@ -11,8 +11,9 @@ import (
 type contextKeyT int
 
 const (
-	contextServiceKey    = contextKeyT(0)
-	contextApiVersionKey = contextKeyT(1)
+	contextServiceKey      = contextKeyT(0)
+	contextApiVersionKey   = contextKeyT(1)
+	contextResponseHeaders = contextKeyT(2)
 )
 
 // WithService returns a new context.Context instance with the Service
@@ -52,6 +53,19 @@ func ContextApiVersion(ctx context.Context) int {
 	return version
 }
 
+// WithResponseHeaders returns a new context.Context instance with the current HTTP
+// response's header collection included as a value.
+func WithResponseHeaders(ctx context.Context, headers http.Header) context.Context {
+	return context.WithValue(ctx, contextResponseHeaders, headers)
+}
+
+// ContextResponseHeaders returns the current HTTP response's header collection from
+// a context.Context, if possible.
+func ContextResponseHeaders(ctx context.Context) http.Header {
+	headers, _ := ctx.Value(contextResponseHeaders).(http.Header)
+	return headers
+}
+
 // Context is middleware that
 type Context struct {
 	s          Service
@@ -83,8 +97,9 @@ func (c *Context) HandleHTTP(ctx context.Context, rw http.ResponseWriter, r *htt
 	// Add the requested API version to response headers (useful for clients when a default version was negotiated)
 	rw.Header().Add(HeaderSpirentApiVersion, strconv.Itoa(version))
 
-	// Pass the service and API version to downstream handlers via context
+	// Pass the service, API version, and response headers to downstream handlers via context
 	ctx = WithService(ctx, c.s)
 	ctx = WithApiVersion(ctx, version)
+	ctx = WithResponseHeaders(ctx, rw.Header())
 	next(ctx, rw, r)
 }
