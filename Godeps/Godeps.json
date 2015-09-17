@@ -25,7 +25,7 @@
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/trace",
-			"Rev": "b07f2eef50eef72031ac6a62a7598c5e69577ada"
+			"Rev": "5b2ff4c77d8e397d9e9daf744ea618db09bd3c93"
 		},
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
@@ -58,8 +58,8 @@
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-47-g93e9980",
-			"Rev": "93e9980741c9e593411b94e07d5bad8cfb4809db"
+			"Comment": "go1.0-cutoff-51-ga8d8d01",
+			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
 		},
 		{
 			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
