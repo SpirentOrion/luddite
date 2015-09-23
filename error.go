@@ -20,6 +20,7 @@ const (
 	EcodeInvalidViewName       = "INVALID_VIEW_NAME"
 	EcodeMissingViewParameter  = "MISSING_VIEW_PARAMETER"
 	EcodeInvalidViewParameter  = "INVALID_VIEW_PARAMETER"
+	EcodeInvalidParameterValue = "INVALID_PARAMETER_VALUE"
 )
 
 var commonErrorMap = map[string]string{
@@ -37,6 +38,7 @@ var commonErrorMap = map[string]string{
 	EcodeInvalidViewName:       "Invalid view name",
 	EcodeMissingViewParameter:  "Missing view parameter: %s",
 	EcodeInvalidViewParameter:  "Invalid view parameter: %s",
+	EcodeInvalidParameterValue: "Invalid parameter value: %s -> %s",
 }
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
