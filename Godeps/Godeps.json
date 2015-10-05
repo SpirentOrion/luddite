@@ -25,7 +25,7 @@
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/trace",
-			"Rev": "5b2ff4c77d8e397d9e9daf744ea618db09bd3c93"
+			"Rev": "ccf3c51c40f22a50583ff6f5e7da6e8d270372df"
 		},
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
@@ -46,7 +46,7 @@
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "73aaaa9eb61d74fbf7e256ca586a3a565b308eea"
+			"Rev": "8df8a93c670173cd1d8737a507a253b94f2d0b5a"
 		},
 		{
 			"ImportPath": "github.com/gorilla/schema",
@@ -67,8 +67,8 @@
 		},
 		{
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
-			"Comment": "0.7.0-14-g61d4487",
-			"Rev": "61d4487606ff7b5fe968c128cdd15a003afdd2dd"
+			"Comment": "0.7.0-37-gdcd7417",
+			"Rev": "dcd7417a58531c608dcd6db8d8b72b11f4b357d7"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",
