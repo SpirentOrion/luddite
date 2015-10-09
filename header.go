@@ -7,14 +7,15 @@ import (
 )
 
 const (
-	HeaderAccept            = "Accept"
-	HeaderAuthorization     = "Authorization"
-	HeaderContentType       = "Content-Type"
-	HeaderForwardedFor      = "X-Forwarded-For"
-	HeaderLocation          = "Location"
-	HeaderRequestId         = "X-Request-Id"
-	HeaderSpirentApiVersion = "X-Spirent-Api-Version"
-	HeaderSpirentNextLink   = "X-Spirent-Next-Link"
+	HeaderAccept               = "Accept"
+	HeaderAuthorization        = "Authorization"
+	HeaderContentType          = "Content-Type"
+	HeaderForwardedFor         = "X-Forwarded-For"
+	HeaderLocation             = "Location"
+	HeaderRequestId            = "X-Request-Id"
+	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
+	HeaderSpirentInhibitPaging = "X-Spirent-Inhibit-Paging"
+	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
 )
 
 func RequestBearerToken(r *http.Request) (token string) {
