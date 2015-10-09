@@ -16,6 +16,8 @@ const (
 	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
 	HeaderSpirentInhibitPaging = "X-Spirent-Inhibit-Paging"
 	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
+
+	CursorNever = "never"
 )
 
 func RequestBearerToken(r *http.Request) (token string) {
@@ -36,6 +38,9 @@ func RequestApiVersion(r *http.Request, defaultVersion int) (version int) {
 }
 
 func RequestQueryCursor(r *http.Request) string {
+	if _, ok := r.Header[HeaderSpirentInhibitPaging]; ok {
+		return CursorNever
+	}
 	return r.URL.Query().Get("cursor")
 }
 
