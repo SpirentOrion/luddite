@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -92,6 +93,9 @@ func NewService(config *ServiceConfig) (Service, error) {
 	case "error":
 		s.defaultLogger.Level = log.ErrorLevel
 	}
+
+	// Add handler to log stacktrace
+	addStackTraceHandler(s.defaultLogger)
 
 	s.accessLogger = log.New()
 	if config.Log.AccessLogPath != "" {
@@ -302,4 +306,17 @@ func openLogFile(logger *log.Logger, logPath string) {
 
 	signal.Notify(sigs, syscall.SIGHUP)
 	<-logging
+}
+
+func addStackTraceHandler(logger *log.Logger) {
+	sigs := make(chan os.Signal, 1)
+	go func() {
+		for {
+			<-sigs
+			buf := make([]byte, 1<<16)
+			size := runtime.Stack(buf, true)
+			logger.Infof("*** goroutine dump ***\n%s", buf[:size])
+		}
+	}()
+	signal.Notify(sigs, syscall.SIGUSR1)
 }
