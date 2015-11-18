@@ -13,6 +13,7 @@ import (
 const (
 	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
 	ContentTypeJson              = "application/json"
+	ContentTypeOctetStream       = "application/octet-stream"
 	ContentTypeXml               = "application/xml"
 	ContentTypeHtml              = "text/html"
 )
@@ -97,6 +98,16 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				esc := new(bytes.Buffer)
 				json.HTMLEscape(esc, b)
 				b = esc.Bytes()
+			}
+		case ContentTypeOctetStream:
+			switch v.(type) {
+			case []byte:
+				b = v.([]byte)
+			case string:
+				b = []byte(v.(string))
+			default:
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 		}
 	}
