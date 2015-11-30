@@ -10,63 +10,75 @@ import (
 
 type contextKeyT int
 
-const (
-	contextServiceKey      = contextKeyT(0)
-	contextApiVersionKey   = contextKeyT(1)
-	contextResponseHeaders = contextKeyT(2)
-)
+const contextHandlerDetailsKey = contextKeyT(0)
 
-// WithService returns a new context.Context instance with the Service
-// included as a value.
-func WithService(ctx context.Context, s Service) context.Context {
-	return context.WithValue(ctx, contextServiceKey, s)
+type handlerDetails struct {
+	s           Service
+	apiVersion  int
+	reqId       string
+	respHeaders http.Header
+}
+
+func withHandlerDetails(ctx context.Context, s Service, apiVersion int, reqId string, respHeaders http.Header) context.Context {
+	d := &handlerDetails{
+		s:           s,
+		apiVersion:  apiVersion,
+		reqId:       reqId,
+		respHeaders: respHeaders,
+	}
+	return context.WithValue(ctx, contextHandlerDetailsKey, d)
 }
 
 // ContextService returns the Service instance value from a
 // context.Context, if possible.
-func ContextService(ctx context.Context) Service {
-	s, _ := ctx.Value(contextServiceKey).(Service)
-	return s
+func ContextService(ctx context.Context) (s Service) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		s = d.s
+	}
+	return
 }
 
 // ContextLogger returns the Service's logger instance value from a
 // context.Context, if possible.
 func ContextLogger(ctx context.Context) (logger *log.Logger) {
-	if s, _ := ctx.Value(contextServiceKey).(Service); s != nil {
-		logger = s.Logger()
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		logger = d.s.Logger()
 	} else {
 		logger = log.New()
 	}
 	return
 }
 
-// WithApiVersion returns a new context.Context instance with the current HTTP request's
-// API version header included as a value.
-func WithApiVersion(ctx context.Context, version int) context.Context {
-	return context.WithValue(ctx, contextApiVersionKey, version)
-}
-
 // ContextApiVersion returns the current HTTP request's API version value from a
 // context.Context, if possible.
-func ContextApiVersion(ctx context.Context) int {
-	version, _ := ctx.Value(contextApiVersionKey).(int)
-	return version
+func ContextApiVersion(ctx context.Context) (apiVersion int) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		apiVersion = d.apiVersion
+	}
+	return
 }
 
-// WithResponseHeaders returns a new context.Context instance with the current HTTP
-// response's header collection included as a value.
-func WithResponseHeaders(ctx context.Context, headers http.Header) context.Context {
-	return context.WithValue(ctx, contextResponseHeaders, headers)
+// ContextRequestId returns the current HTTP request's ID value from a
+// context.Context, if possible.
+func ContextRequestId(ctx context.Context) (reqId string) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		reqId = d.reqId
+	}
+	return
 }
 
 // ContextResponseHeaders returns the current HTTP response's header collection from
 // a context.Context, if possible.
-func ContextResponseHeaders(ctx context.Context) http.Header {
-	headers, _ := ctx.Value(contextResponseHeaders).(http.Header)
-	return headers
+func ContextResponseHeaders(ctx context.Context) (respHeaders http.Header) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		respHeaders = d.respHeaders
+	}
+	return
 }
 
-// Context is middleware that
+// Context is middleware that performs API version selection and enforces the service's
+// min/max supported version constraints.  It also makes the Service instance, selected
+// API version and request id available.
 type Context struct {
 	s          Service
 	minVersion int
@@ -97,9 +109,7 @@ func (c *Context) HandleHTTP(ctx context.Context, rw http.ResponseWriter, r *htt
 	// Add the requested API version to response headers (useful for clients when a default version was negotiated)
 	rw.Header().Add(HeaderSpirentApiVersion, strconv.Itoa(version))
 
-	// Pass the service, API version, and response headers to downstream handlers via context
-	ctx = WithService(ctx, c.s)
-	ctx = WithApiVersion(ctx, version)
-	ctx = WithResponseHeaders(ctx, rw.Header())
+	// Pass the service, API version, request id, and response headers to downstream handlers via context
+	ctx = withHandlerDetails(ctx, c.s, version, RequestId(r), rw.Header())
 	next(ctx, rw, r)
 }

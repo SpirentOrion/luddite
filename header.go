@@ -20,6 +20,10 @@ const (
 	CursorNever = "never"
 )
 
+func RequestId(r *http.Request) string {
+	return r.Header.Get(HeaderRequestId)
+}
+
 func RequestBearerToken(r *http.Request) (token string) {
 	if authStr := r.Header.Get(HeaderAuthorization); authStr != "" && authStr[:7] == "Bearer " {
 		token = authStr[7:]
