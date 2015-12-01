@@ -43,10 +43,11 @@ var commonErrorMap = map[string]string{
 
 // Error is a transfer object that is serialized as the body in 4xx and 5xx responses.
 type Error struct {
-	XMLName xml.Name `json:"-" xml:"error"`
-	Code    string   `json:"code" xml:"code"`
-	Message string   `json:"message" xml:"message"`
-	Stack   string   `json:"stack,omitempty" xml:"stack,omitempty"`
+	XMLName  xml.Name    `json:"-" xml:"error"`
+	Code     string      `json:"code" xml:"code"`
+	Message  string      `json:"message" xml:"message"`
+	Stack    string      `json:"stack,omitempty" xml:"stack,omitempty"`
+	MoreInfo interface{} `json:"more_info" xml:"more_info"`
 }
 
 func (e *Error) Error() string {
