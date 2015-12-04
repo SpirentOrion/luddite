@@ -17,6 +17,7 @@ const (
 	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
 	HeaderSpirentInhibitPaging = "X-Spirent-Inhibit-Paging"
 	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
+	HeaderSpirentResourceNonce = "X-Spirent-Resource-Nonce"
 
 	CursorNever = "never"
 )
@@ -55,4 +56,8 @@ func RequestNextLink(r *http.Request, cursor string) *url.URL {
 	v.Set("cursor", cursor)
 	next.RawQuery = v.Encode()
 	return &next
+}
+
+func RequestResourceNonce(r *http.Request) string {
+	return r.Header.Get(HeaderSpirentResourceNonce)
 }
