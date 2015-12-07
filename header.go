@@ -16,6 +16,7 @@ const (
 	HeaderRequestId            = "X-Request-Id"
 	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
 	HeaderSpirentInhibitPaging = "X-Spirent-Inhibit-Paging"
+	HeaderSpirentMetaPrefix    = "X-Spirent-Meta-"
 	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
 	HeaderSpirentResourceNonce = "X-Spirent-Resource-Nonce"
 
