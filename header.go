@@ -12,6 +12,7 @@ const (
 	HeaderContentType          = "Content-Type"
 	HeaderETag                 = "ETag"
 	HeaderForwardedFor         = "X-Forwarded-For"
+	HeaderIfNoneMatch          = "If-None-Match"
 	HeaderLocation             = "Location"
 	HeaderRequestId            = "X-Request-Id"
 	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
