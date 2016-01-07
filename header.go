@@ -29,7 +29,7 @@ func RequestId(r *http.Request) string {
 }
 
 func RequestBearerToken(r *http.Request) (token string) {
-	if authStr := r.Header.Get(HeaderAuthorization); authStr != "" && authStr[:7] == "Bearer " {
+	if authStr := r.Header.Get(HeaderAuthorization); len(authStr) >= 7 && authStr[:7] == "Bearer " {
 		token = authStr[7:]
 	}
 	return
