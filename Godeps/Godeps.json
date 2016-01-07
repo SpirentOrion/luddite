@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/SpirentOrion/luddite",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.5.1",
 	"Packages": [
 		"./..."
 	],
@@ -69,6 +69,23 @@
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
 			"Comment": "0.7.0-37-gdcd7417",
 			"Rev": "dcd7417a58531c608dcd6db8d8b72b11f4b357d7"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_model/go",
+			"Comment": "model-0.0.2-12-gfa8ad6f",
+			"Rev": "fa8ad6fec33561be4280a8f0514318c79d7f6cb6"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/expfmt",
+			"Rev": "e5bcf05f3c1b99df9892e773349e88d038f0e93c"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/model",
+			"Rev": "e5bcf05f3c1b99df9892e773349e88d038f0e93c"
+		},
+		{
+			"ImportPath": "github.com/prometheus/procfs",
+			"Rev": "3b231703e7dd0ca93302b5242ad6aeb4b5c603a2"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",
