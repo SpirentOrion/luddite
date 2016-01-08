@@ -16,6 +16,9 @@ const (
 	ContentTypeOctetStream       = "application/octet-stream"
 	ContentTypeXml               = "application/xml"
 	ContentTypeHtml              = "text/html"
+	ContentTypeCss               = "text/css"
+	ContentTypeJavascript        = "application/javascript"
+	ContentTypePng               = "image/png"
 )
 
 var formDecoder = schema.NewDecoder()
