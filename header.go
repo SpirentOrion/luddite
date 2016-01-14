@@ -10,6 +10,7 @@ const (
 	HeaderAccept               = "Accept"
 	HeaderAuthorization        = "Authorization"
 	HeaderContentType          = "Content-Type"
+	HeaderContentDisposition   = "Content-Disposition"
 	HeaderETag                 = "ETag"
 	HeaderForwardedFor         = "X-Forwarded-For"
 	HeaderIfNoneMatch          = "If-None-Match"
