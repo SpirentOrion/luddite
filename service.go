@@ -224,7 +224,7 @@ func (s *service) newBottomHandler() (Handler, error) {
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
-	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml}), nil
+	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml, ContentTypeOctetStream}), nil
 }
 
 func (s *service) newContextHandler() (Handler, error) {
