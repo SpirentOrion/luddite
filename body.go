@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"io"
 	"mime"
 	"net/http"
+	"os"
+	"reflect"
+	"strconv"
 
 	"github.com/gorilla/schema"
 )
@@ -16,9 +20,6 @@ const (
 	ContentTypeOctetStream       = "application/octet-stream"
 	ContentTypeXml               = "application/xml"
 	ContentTypeHtml              = "text/html"
-	ContentTypeCss               = "text/css"
-	ContentTypeJavascript        = "application/javascript"
-	ContentTypePng               = "image/png"
 )
 
 var formDecoder = schema.NewDecoder()
@@ -109,8 +110,25 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			case string:
 				b = []byte(v.(string))
 			default:
-				rw.WriteHeader(http.StatusInternalServerError)
-				return
+				readerType := reflect.TypeOf((*io.Reader)(nil)).Elem()
+				if reflect.TypeOf(v).Implements(readerType) {
+					if reflect.TypeOf(v) == reflect.TypeOf((*os.File)(nil)) {
+						f := v.(*os.File)
+						var fi os.FileInfo
+						if fi, err = f.Stat(); err != nil {
+							rw.WriteHeader(http.StatusInternalServerError)
+							return
+						} else {
+							rw.Header().Set("Content-Disposition", "attachment; filename="+fi.Name())
+							rw.Header().Set("Content-Length", strconv.FormatInt(fi.Size(), 10))
+						}
+					}
+					r := v.(io.Reader)
+					io.Copy(rw, r)
+				} else {
+					rw.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 	}
