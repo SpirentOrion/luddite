@@ -4,12 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"io"
 	"mime"
 	"net/http"
-	"os"
-	"reflect"
-	"strconv"
 
 	"github.com/gorilla/schema"
 )
@@ -110,25 +106,8 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			case string:
 				b = []byte(v.(string))
 			default:
-				readerType := reflect.TypeOf((*io.Reader)(nil)).Elem()
-				if reflect.TypeOf(v).Implements(readerType) {
-					if reflect.TypeOf(v) == reflect.TypeOf((*os.File)(nil)) {
-						f := v.(*os.File)
-						var fi os.FileInfo
-						if fi, err = f.Stat(); err != nil {
-							rw.WriteHeader(http.StatusInternalServerError)
-							return
-						} else {
-							rw.Header().Set("Content-Disposition", "attachment; filename="+fi.Name())
-							rw.Header().Set("Content-Length", strconv.FormatInt(fi.Size(), 10))
-						}
-					}
-					r := v.(io.Reader)
-					io.Copy(rw, r)
-				} else {
-					rw.WriteHeader(http.StatusInternalServerError)
-					return
-				}
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 		}
 	}
