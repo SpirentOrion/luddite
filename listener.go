@@ -48,6 +48,8 @@ func (sl *StoppableTCPListener) Accept() (net.Conn, error) {
 			if ok && netErr.Timeout() && netErr.Temporary() {
 				continue
 			}
+
+			return nil, err
 		}
 
 		if sl.keepalives {
