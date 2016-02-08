@@ -3,6 +3,7 @@ package luddite
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -204,19 +205,30 @@ func (s *service) Run() error {
 	}
 	s.AddHandler(h)
 
-	// Serve HTTP or HTTPS, depending on config
 	var middleware http.Handler = s.middleware
 	if s.config.Metrics.Enabled {
 		middleware = prometheus.InstrumentHandler("service", middleware)
 	}
 
+	// Serve HTTP or HTTPS, depending on config. Use stoppable listener
+	// so we can exit gracefully if signaled to do so.
+	var stoppableListener net.Listener
 	if s.config.Transport.TLS {
 		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
-		return http.ListenAndServeTLS(s.config.Addr, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath, middleware)
+		stoppableListener, err = NewStoppableTLSListener(s.config.Addr, true, s.config.Transport.CertFilePath, s.config.Transport.KeyFilePath)
 	} else {
 		s.defaultLogger.Debugf("HTTP listening on %s", s.config.Addr)
-		return http.ListenAndServe(s.config.Addr, middleware)
+		stoppableListener, err = NewStoppableTCPListener(s.config.Addr, true)
 	}
+	if err != nil {
+		return err
+	}
+	err = http.Serve(stoppableListener, middleware)
+	if _, ok := err.(*ListenerStoppedError); ok {
+		return nil
+	}
+	return err
+
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
