@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"strconv"
@@ -125,6 +126,9 @@ func handlePostgresError(db *SqlDb, op, query string, err error) {
 
 func shouldRetryPostgresError(db *SqlDb, err error) bool {
 	if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == PostgresErrorSerializationFailure {
+		return true
+	}
+	if err == driver.ErrBadConn {
 		return true
 	}
 	return false
