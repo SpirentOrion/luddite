@@ -241,6 +241,5 @@ func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64)
 
 func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId int64) {
 	traceIdStr := fmt.Sprint(traceId)
-	req.Header.Set(HeaderRequestId, traceIdStr)
 	rw.Header().Set(HeaderRequestId, traceIdStr)
 }
