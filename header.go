@@ -9,8 +9,9 @@ import (
 const (
 	HeaderAccept               = "Accept"
 	HeaderAuthorization        = "Authorization"
-	HeaderContentType          = "Content-Type"
 	HeaderContentDisposition   = "Content-Disposition"
+	HeaderContentLength        = "Content-Length"
+	HeaderContentType          = "Content-Type"
 	HeaderETag                 = "ETag"
 	HeaderForwardedFor         = "X-Forwarded-For"
 	HeaderIfNoneMatch          = "If-None-Match"
