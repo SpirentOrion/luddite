@@ -8,7 +8,7 @@
 		{
 			"ImportPath": "bitbucket.org/ww/goautoneg",
 			"Comment": "null-5",
-			"Rev": "75cd24fc2f2c2a2088577d12123ddee5f54e0675"
+			"Rev": "'75cd24fc2f2c2a2088577d12123ddee5f54e0675'"
 		},
 		{
 			"ImportPath": "github.com/K-Phoen/negotiation",
@@ -20,12 +20,12 @@
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/logrus",
-			"Comment": "v0.7.3-5-g60a5e5f",
-			"Rev": "60a5e5f14bfe352e66e7a16d4ecf8de759276fe2"
+			"Comment": "v0.10.0-16-g68cf6bf",
+			"Rev": "68cf6bf78136b7f50e7a1bf57f3f2a236266d1d4"
 		},
 		{
 			"ImportPath": "github.com/SpirentOrion/trace",
-			"Rev": "ccf3c51c40f22a50583ff6f5e7da6e8d270372df"
+			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
 		},
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
@@ -38,15 +38,15 @@
 		},
 		{
 			"ImportPath": "github.com/goamz/goamz/aws",
-			"Rev": "ad637a587dd8314770a1084481dd7b5d4fa1232f"
+			"Rev": "d769f530bfa9b2a5babddb3fc0f578acc0d456d3"
 		},
 		{
 			"ImportPath": "github.com/goamz/goamz/dynamodb",
-			"Rev": "ad637a587dd8314770a1084481dd7b5d4fa1232f"
+			"Rev": "d769f530bfa9b2a5babddb3fc0f578acc0d456d3"
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "8df8a93c670173cd1d8737a507a253b94f2d0b5a"
+			"Rev": "68415e7123da32b07eab49c96d2c4d6158360e9b"
 		},
 		{
 			"ImportPath": "github.com/gorilla/schema",
@@ -58,8 +58,8 @@
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-51-ga8d8d01",
-			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
+			"Comment": "go1.0-cutoff-74-g8ad2b29",
+			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
 		},
 		{
 			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
@@ -101,7 +101,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "4977ec316d25d824a5da6df00ef57ae03833166c"
+			"Rev": "042ba42fa6633b34205efc66ba5719cd3afd8d38"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
