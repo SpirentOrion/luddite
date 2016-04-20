@@ -28,6 +28,14 @@
 			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
 		},
 		{
+			"ImportPath": "github.com/SpirentOrion/trace/dynamorec",
+			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
+		},
+		{
+			"ImportPath": "github.com/SpirentOrion/trace/yamlrec",
+			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
+		},
+		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
 			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
 		},
@@ -58,6 +66,11 @@
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-74-g8ad2b29",
+			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
 			"Comment": "go1.0-cutoff-74-g8ad2b29",
 			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
 		},
@@ -102,6 +115,10 @@
 		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "042ba42fa6633b34205efc66ba5719cd3afd8d38"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "f64b50fbea64174967a8882830d621a18ee1548e"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
