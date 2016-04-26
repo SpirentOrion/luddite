@@ -11,11 +11,14 @@ import (
 )
 
 const (
+	ContentTypeMultipartFormData = "multipart/form-data"
 	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
 	ContentTypeJson              = "application/json"
 	ContentTypeOctetStream       = "application/octet-stream"
 	ContentTypeXml               = "application/xml"
 	ContentTypeHtml              = "text/html"
+
+	maxFormDataMemoryUsage = 10 * 1024 * 1024
 )
 
 var formDecoder = schema.NewDecoder()
@@ -23,6 +26,14 @@ var formDecoder = schema.NewDecoder()
 func ReadRequest(req *http.Request, v interface{}) error {
 	ct := req.Header.Get(HeaderContentType)
 	switch mt, _, _ := mime.ParseMediaType(ct); mt {
+	case ContentTypeMultipartFormData:
+		if err := req.ParseMultipartForm(maxFormDataMemoryUsage); err != nil {
+			return NewError(nil, EcodeDeserializationFailed, err)
+		}
+		if err := formDecoder.Decode(v, req.PostForm); err != nil {
+			return NewError(nil, EcodeDeserializationFailed, err)
+		}
+		return nil
 	case ContentTypeWwwFormUrlencoded:
 		if err := req.ParseForm(); err != nil {
 			return NewError(nil, EcodeDeserializationFailed, err)
