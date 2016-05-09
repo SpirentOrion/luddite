@@ -13,6 +13,7 @@ const (
 	HeaderContentLength        = "Content-Length"
 	HeaderContentType          = "Content-Type"
 	HeaderETag                 = "ETag"
+	HeaderExpect               = "Expect"
 	HeaderForwardedFor         = "X-Forwarded-For"
 	HeaderIfNoneMatch          = "If-None-Match"
 	HeaderLocation             = "Location"
