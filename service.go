@@ -153,36 +153,36 @@ func (s *service) AddHandler(h Handler) {
 
 func (s *service) AddSingletonResource(basePath string, r Resource) {
 	// GET /basePath
-	addGetRoute(s.router, basePath, false, r)
+	AddGetRoute(s.router, basePath, false, r)
 
 	// PUT /basePath
-	addUpdateRoute(s.router, basePath, false, r)
+	AddUpdateRoute(s.router, basePath, false, r)
 
 	// POST /basePath/{action}
-	addActionRoute(s.router, basePath, false, r)
+	AddActionRoute(s.router, basePath, false, r)
 }
 
 func (s *service) AddCollectionResource(basePath string, r Resource) {
 	// GET /basePath
-	addListRoute(s.router, basePath, r)
+	AddListRoute(s.router, basePath, r)
 
 	// GET /basePath/{id}
-	addGetRoute(s.router, basePath, true, r)
+	AddGetRoute(s.router, basePath, true, r)
 
 	// POST /basePath
-	addCreateRoute(s.router, basePath, r)
+	AddCreateRoute(s.router, basePath, r)
 
 	// PUT /basePath/{id}
-	addUpdateRoute(s.router, basePath, true, r)
+	AddUpdateRoute(s.router, basePath, true, r)
 
 	// DELETE /basePath
-	addDeleteRoute(s.router, basePath, false, r)
+	AddDeleteRoute(s.router, basePath, false, r)
 
 	// DELETE /basePath/{id}
-	addDeleteRoute(s.router, basePath, true, r)
+	AddDeleteRoute(s.router, basePath, true, r)
 
 	// POST /basePath/{id}/{action}
-	addActionRoute(s.router, basePath, true, r)
+	AddActionRoute(s.router, basePath, true, r)
 }
 
 func (s *service) Config() *ServiceConfig {
