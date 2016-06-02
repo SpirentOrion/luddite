@@ -55,14 +55,14 @@ type Resource interface {
 	Action(ctx context.Context, req *http.Request, id string, action string) (int, interface{})
 }
 
-func addListRoute(router *httprouter.Router, basePath string, r Resource) {
+func AddListRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.GET(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		status, v := r.List(ctx, req)
 		WriteResponse(rw, status, v)
 	})
 }
 
-func addGetRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
+func AddGetRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
 		itemPath = path.Join(basePath, ":id")
@@ -77,7 +77,7 @@ func addGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 	})
 }
 
-func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
+func AddCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.POST(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
 		v0 := r.New()
 		if err := ReadRequest(req, v0); err != nil {
@@ -97,7 +97,7 @@ func addCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 	})
 }
 
-func addUpdateRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
+func AddUpdateRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
 		itemPath = path.Join(basePath, ":id")
@@ -121,7 +121,7 @@ func addUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 	})
 }
 
-func addDeleteRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
+func AddDeleteRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
 		itemPath = path.Join(basePath, ":id")
@@ -136,7 +136,7 @@ func addDeleteRoute(router *httprouter.Router, basePath string, withId bool, r R
 	})
 }
 
-func addActionRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
+func AddActionRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var actionPath string
 	if withId {
 		actionPath = path.Join(basePath, ":id", ":action")
