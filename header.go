@@ -50,6 +50,13 @@ func RequestApiVersion(r *http.Request, defaultVersion int) (version int) {
 	return
 }
 
+func RequestExternalHost(r *http.Request) string {
+	if host := r.Header.Get(HeaderForwardedFor); host != "" {
+		return host
+	}
+	return r.Host
+}
+
 func RequestQueryCursor(r *http.Request) string {
 	if _, ok := r.Header[HeaderSpirentInhibitPaging]; ok {
 		return CursorNever
