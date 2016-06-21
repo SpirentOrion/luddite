@@ -15,6 +15,7 @@ const (
 	HeaderETag                 = "ETag"
 	HeaderExpect               = "Expect"
 	HeaderForwardedFor         = "X-Forwarded-For"
+	HeaderForwardedHost        = "X-Forwarded-Host"
 	HeaderIfNoneMatch          = "If-None-Match"
 	HeaderLocation             = "Location"
 	HeaderRequestId            = "X-Request-Id"
@@ -51,7 +52,7 @@ func RequestApiVersion(r *http.Request, defaultVersion int) (version int) {
 }
 
 func RequestExternalHost(r *http.Request) string {
-	if host := r.Header.Get(HeaderForwardedFor); host != "" {
+	if host := r.Header.Get(HeaderForwardedHost); host != "" {
 		return host
 	}
 	return r.Host
