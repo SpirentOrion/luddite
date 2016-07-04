@@ -75,36 +75,36 @@ func NewService(config *ServiceConfig) (Service, error) {
 	}
 
 	s.defaultLogger = log.New()
+	s.defaultLogger.SetFormatter(&log.JSONFormatter{})
 	if config.Log.ServiceLogPath != "" {
 		openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
-		s.defaultLogger.Formatter = &log.JSONFormatter{}
 	} else {
-		s.defaultLogger.Out = os.Stdout
+		s.defaultLogger.SetOutput(os.Stdout)
 	}
 
 	switch strings.ToLower(config.Log.ServiceLogLevel) {
 	case "debug":
-		s.defaultLogger.Level = log.DebugLevel
+		s.defaultLogger.SetLevel(log.DebugLevel)
 	default:
 		fallthrough
 	case "info":
-		s.defaultLogger.Level = log.InfoLevel
+		s.defaultLogger.SetLevel(log.InfoLevel)
 	case "warn":
-		s.defaultLogger.Level = log.WarnLevel
+		s.defaultLogger.SetLevel(log.WarnLevel)
 	case "error":
-		s.defaultLogger.Level = log.ErrorLevel
+		s.defaultLogger.SetLevel(log.ErrorLevel)
 	}
 
 	// Add handler to log stacktrace
 	addStackTraceHandler(s.defaultLogger)
 
 	s.accessLogger = log.New()
+	s.accessLogger.SetFormatter(&log.JSONFormatter{})
 	if config.Log.AccessLogPath != "" {
 		openLogFile(s.accessLogger, config.Log.AccessLogPath)
-		s.accessLogger.Formatter = &log.JSONFormatter{}
 	} else {
-		s.accessLogger.Out = os.Stdout
-		s.accessLogger.Level = log.DebugLevel
+		s.accessLogger.SetOutput(os.Stdout)
+		s.accessLogger.SetLevel(log.DebugLevel)
 	}
 
 	s.router.NotFound = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
