@@ -13,19 +13,13 @@ type contextKeyT int
 const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
-	s           Service
-	apiVersion  int
-	reqId       string
-	respHeaders http.Header
+	s          Service
+	apiVersion int
+	reqId      string
+	respWriter http.ResponseWriter
 }
 
-func withHandlerDetails(ctx context.Context, s Service, apiVersion int, reqId string, respHeaders http.Header) context.Context {
-	d := &handlerDetails{
-		s:           s,
-		apiVersion:  apiVersion,
-		reqId:       reqId,
-		respHeaders: respHeaders,
-	}
+func withHandlerDetails(ctx context.Context, d *handlerDetails) context.Context {
 	return context.WithValue(ctx, contextHandlerDetailsKey, d)
 }
 
@@ -71,7 +65,16 @@ func ContextRequestId(ctx context.Context) (reqId string) {
 // a context.Context, if possible.
 func ContextResponseHeaders(ctx context.Context) (respHeaders http.Header) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
-		respHeaders = d.respHeaders
+		respHeaders = d.respWriter.Header()
+	}
+	return
+}
+
+// ContextCloseNotify returns a channel that receives at most a single value
+// (true) when the client connection has gone away, if possible.
+func ContextCloseNotify(ctx context.Context) (closeNotify <-chan bool) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		closeNotify = d.respWriter.(http.CloseNotifier).CloseNotify()
 	}
 	return
 }
@@ -109,7 +112,12 @@ func (c *Context) HandleHTTP(ctx context.Context, rw http.ResponseWriter, r *htt
 	// Add the requested API version to response headers (useful for clients when a default version was negotiated)
 	rw.Header().Add(HeaderSpirentApiVersion, strconv.Itoa(version))
 
-	// Pass the service, API version, request id, and response headers to downstream handlers via context
-	ctx = withHandlerDetails(ctx, c.s, version, RequestId(r), rw.Header())
-	next(ctx, rw, r)
+	// Pass the service, API version, request id, and response writer-related objects to downstream handlers via context
+	d := &handlerDetails{
+		s:          c.s,
+		apiVersion: version,
+		reqId:      RequestId(r),
+		respWriter: rw,
+	}
+	next(withHandlerDetails(ctx, d), rw, r)
 }
