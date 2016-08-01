@@ -5,8 +5,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/SpirentOrion/httprouter"
-	"golang.org/x/net/context"
+	"github.com/julienschmidt/httprouter"
 )
 
 // Resource is a set of REST-oriented HTTP method handlers.
@@ -37,27 +36,27 @@ type Resource interface {
 	Id(value interface{}) string
 
 	// List returns an HTTP status code and a slice of resources (or error).
-	List(ctx context.Context, req *http.Request) (int, interface{})
+	List(req *http.Request) (int, interface{})
 
 	// Get returns an HTTP status code and a single resource (or error).
-	Get(ctx context.Context, req *http.Request, id string) (int, interface{})
+	Get(req *http.Request, id string) (int, interface{})
 
 	// Create returns an HTTP status code and a new resource (or error).
-	Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{})
+	Create(req *http.Request, value interface{}) (int, interface{})
 
 	// Update returns an HTTP status code and an updated resource (or error).
-	Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{})
+	Update(req *http.Request, id string, value interface{}) (int, interface{})
 
 	// Delete returns an HTTP status code and a deleted resource (or error).
-	Delete(ctx context.Context, req *http.Request, id string) (int, interface{})
+	Delete(req *http.Request, id string) (int, interface{})
 
 	// Action returns an HTTP status code and a response body (or error).
-	Action(ctx context.Context, req *http.Request, id string, action string) (int, interface{})
+	Action(req *http.Request, id string, action string) (int, interface{})
 }
 
 func AddListRoute(router *httprouter.Router, basePath string, r Resource) {
-	router.GET(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		status, v := r.List(ctx, req)
+	router.GET(basePath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		status, v := r.List(req)
 		WriteResponse(rw, status, v)
 	})
 }
@@ -69,22 +68,21 @@ func AddGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 	} else {
 		itemPath = basePath
 	}
-	router.GET(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		vars := httprouter.ContextParams(ctx)
-		id := vars.ByName("id")
-		status, v := r.Get(ctx, req, id)
+	router.GET(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		id := params.ByName("id")
+		status, v := r.Get(req, id)
 		WriteResponse(rw, status, v)
 	})
 }
 
 func AddCreateRoute(router *httprouter.Router, basePath string, r Resource) {
-	router.POST(basePath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
+	router.POST(basePath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		v0 := r.New()
 		if err := ReadRequest(req, v0); err != nil {
 			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
-		status, v1 := r.Create(ctx, req, v0)
+		status, v1 := r.Create(req, v0)
 		if status == http.StatusCreated {
 			url := url.URL{
 				Scheme: req.URL.Scheme,
@@ -104,9 +102,8 @@ func AddUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 	} else {
 		itemPath = basePath
 	}
-	router.PUT(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		vars := httprouter.ContextParams(ctx)
-		id := vars.ByName("id")
+	router.PUT(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		id := params.ByName("id")
 		v0 := r.New()
 		if err := ReadRequest(req, v0); err != nil {
 			WriteResponse(rw, http.StatusBadRequest, err)
@@ -116,7 +113,7 @@ func AddUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 			WriteResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
 			return
 		}
-		status, v1 := r.Update(ctx, req, id, v0)
+		status, v1 := r.Update(req, id, v0)
 		WriteResponse(rw, status, v1)
 	})
 }
@@ -128,10 +125,9 @@ func AddDeleteRoute(router *httprouter.Router, basePath string, withId bool, r R
 	} else {
 		itemPath = basePath
 	}
-	router.DELETE(itemPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		vars := httprouter.ContextParams(ctx)
-		id := vars.ByName("id")
-		status, v := r.Delete(ctx, req, id)
+	router.DELETE(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		id := params.ByName("id")
+		status, v := r.Delete(req, id)
 		WriteResponse(rw, status, v)
 	})
 }
@@ -143,14 +139,13 @@ func AddActionRoute(router *httprouter.Router, basePath string, withId bool, r R
 	} else {
 		actionPath = path.Join(basePath, ":action")
 	}
-	router.POST(actionPath, func(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-		vars := httprouter.ContextParams(ctx)
+	router.POST(actionPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		var id string
 		if withId {
-			id = vars.ByName("id")
+			id = params.ByName("id")
 		}
-		action := vars.ByName("action")
-		status, v := r.Action(ctx, req, id, action)
+		action := params.ByName("action")
+		status, v := r.Action(req, id, action)
 		WriteResponse(rw, status, v)
 	})
 }
@@ -168,26 +163,26 @@ func (r *NotImplementedResource) Id(value interface{}) string {
 	return ""
 }
 
-func (r *NotImplementedResource) List(ctx context.Context, req *http.Request) (int, interface{}) {
+func (r *NotImplementedResource) List(req *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Get(ctx context.Context, req *http.Request, id string) (int, interface{}) {
+func (r *NotImplementedResource) Get(req *http.Request, id string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{}) {
+func (r *NotImplementedResource) Create(req *http.Request, value interface{}) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{}) {
+func (r *NotImplementedResource) Update(req *http.Request, id string, value interface{}) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Delete(ctx context.Context, req *http.Request, id string) (int, interface{}) {
+func (r *NotImplementedResource) Delete(req *http.Request, id string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Action(ctx context.Context, req *http.Request, id, action string) (int, interface{}) {
+func (r *NotImplementedResource) Action(req *http.Request, id, action string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }

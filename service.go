@@ -12,10 +12,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/SpirentOrion/httprouter"
 	log "github.com/SpirentOrion/logrus"
+	"github.com/julienschmidt/httprouter"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -95,9 +94,6 @@ func NewService(config *ServiceConfig) (Service, error) {
 		s.defaultLogger.SetLevel(log.ErrorLevel)
 	}
 
-	// Add handler to log stacktrace
-	addStackTraceHandler(s.defaultLogger)
-
 	s.accessLogger = log.New()
 	s.accessLogger.SetFormatter(&log.JSONFormatter{})
 	if config.Log.AccessLogPath != "" {
@@ -107,13 +103,13 @@ func NewService(config *ServiceConfig) (Service, error) {
 		s.accessLogger.SetLevel(log.DebugLevel)
 	}
 
-	s.router.NotFound = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
+	s.router.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
-	}
+	})
 
-	s.router.MethodNotAllowed = func(_ context.Context, rw http.ResponseWriter, _ *http.Request) {
+	s.router.MethodNotAllowed = http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusMethodNotAllowed)
-	}
+	})
 
 	// Create default middleware handlers
 	bottom, err := s.newBottomHandler()
@@ -126,13 +122,13 @@ func NewService(config *ServiceConfig) (Service, error) {
 		return nil, err
 	}
 
-	context, err := s.newContextHandler()
+	version, err := s.newVersionHandler()
 	if err != nil {
 		return nil, err
 	}
 
 	// Build middleware stack
-	s.handlers = []Handler{bottom, negotiator, context}
+	s.handlers = []Handler{bottom, negotiator, version}
 	s.middleware = buildMiddleware(s.handlers)
 
 	// Install default http handlers
@@ -143,6 +139,8 @@ func NewService(config *ServiceConfig) (Service, error) {
 		s.addSchemaRoutes()
 	}
 
+	// Dump goroutine stacks on demand
+	dumpGoroutineStacks(s.defaultLogger)
 	return s, nil
 }
 
@@ -223,23 +221,24 @@ func (s *service) Run() error {
 	if err != nil {
 		return err
 	}
-	err = http.Serve(stoppableListener, middleware)
-	if _, ok := err.(*ListenerStoppedError); ok {
-		return nil
-	}
-	return err
 
+	if err = http.Serve(stoppableListener, middleware); err != nil {
+		if _, ok := err.(*ListenerStoppedError); !ok {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *service) newBottomHandler() (Handler, error) {
-	return NewBottom(s.config, s.defaultLogger, s.accessLogger), nil
+	return NewBottom(s, s.defaultLogger, s.accessLogger), nil
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
 	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml, ContentTypeOctetStream}), nil
 }
 
-func (s *service) newContextHandler() (Handler, error) {
+func (s *service) newVersionHandler() (Handler, error) {
 	if s.config.Version.Min < 1 {
 		return nil, errors.New("service's minimum API version must be greater than zero")
 	}
@@ -247,14 +246,12 @@ func (s *service) newContextHandler() (Handler, error) {
 		return nil, errors.New("service's maximum API version must be greater than zero")
 	}
 
-	return NewContext(s, s.config.Version.Min, s.config.Version.Max), nil
+	return NewVersion(s.config.Version.Min, s.config.Version.Max), nil
 }
 
 func (s *service) newRouterHandler() (Handler, error) {
-	return HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, _ ContextHandlerFunc) {
-		// No more middleware handlers: further dispatch happens via httprouter
-		s.router.HandleHTTP(ctx, rw, r)
-	}), nil
+	// No more middleware handlers: remaining dispatch happens via httprouter
+	return WrapHttpHandler(s.router), nil
 }
 
 func (s *service) addMetricsRoute() {
@@ -264,7 +261,7 @@ func (s *service) addMetricsRoute() {
 	}
 
 	h := prometheus.UninstrumentedHandler()
-	s.router.GET(uriPath, func(_ context.Context, rw http.ResponseWriter, r *http.Request) { h.ServeHTTP(rw, r) })
+	s.router.GET(uriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { h.ServeHTTP(rw, req) })
 }
 
 func (s *service) addSchemaRoutes() {
@@ -276,14 +273,14 @@ func (s *service) addSchemaRoutes() {
 
 	// Temporarily redirect (307) the base schema path to the default schema, e.g. /schema -> /schema/v2
 	defaultSchemaPath := path.Join(config.Schema.UriPath, fmt.Sprintf("v%d", config.Version.Max))
-	s.router.GET(config.Schema.UriPath, func(_ context.Context, rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, defaultSchemaPath, http.StatusTemporaryRedirect)
+	s.router.GET(config.Schema.UriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		http.Redirect(rw, req, defaultSchemaPath, http.StatusTemporaryRedirect)
 	})
 
 	// Optionally temporarily redirect (307) the root to the base schema path, e.g. / -> /schema
 	if config.Schema.RootRedirect {
-		s.router.GET("/", func(_ context.Context, rw http.ResponseWriter, r *http.Request) {
-			http.Redirect(rw, r, config.Schema.UriPath, http.StatusTemporaryRedirect)
+		s.router.GET("/", func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+			http.Redirect(rw, req, config.Schema.UriPath, http.StatusTemporaryRedirect)
 		})
 	}
 }
@@ -320,7 +317,7 @@ func openLogFile(logger *log.Logger, logPath string) {
 	<-logging
 }
 
-func addStackTraceHandler(logger *log.Logger) {
+func dumpGoroutineStacks(logger *log.Logger) {
 	sigs := make(chan os.Signal, 1)
 	go func() {
 		for {

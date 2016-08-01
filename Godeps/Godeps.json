@@ -1,78 +1,36 @@
 {
 	"ImportPath": "github.com/SpirentOrion/luddite",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
-			"ImportPath": "bitbucket.org/ww/goautoneg",
-			"Comment": "null-5",
-			"Rev": "'75cd24fc2f2c2a2088577d12123ddee5f54e0675'"
-		},
-		{
 			"ImportPath": "github.com/K-Phoen/negotiation",
 			"Rev": "416fb5f2f78840726e34b2b899b913684040dc7e"
 		},
 		{
-			"ImportPath": "github.com/SpirentOrion/httprouter",
-			"Rev": "2fc466ce6650ee223bc91d8eae99bc7676e0f693"
-		},
-		{
 			"ImportPath": "github.com/SpirentOrion/logrus",
-			"Comment": "v0.10.0-16-g68cf6bf",
-			"Rev": "68cf6bf78136b7f50e7a1bf57f3f2a236266d1d4"
-		},
-		{
-			"ImportPath": "github.com/SpirentOrion/trace",
-			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
-		},
-		{
-			"ImportPath": "github.com/SpirentOrion/trace/dynamorec",
-			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
-		},
-		{
-			"ImportPath": "github.com/SpirentOrion/trace/yamlrec",
-			"Rev": "b82fd253ae1252962c4189a3732e753606e2ee19"
+			"Comment": "v0.10.0-18-gbca7f7d",
+			"Rev": "bca7f7d35e352ee0a21c4fa0b08d846c237f6220"
 		},
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
-			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
-		},
-		{
-			"ImportPath": "github.com/bitly/go-simplejson",
-			"Comment": "v0.4.3-30-g18db6e6",
-			"Rev": "18db6e68d8fd9cbf2e8ebe4c81a78b96fd9bf05a"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/aws",
-			"Rev": "d769f530bfa9b2a5babddb3fc0f578acc0d456d3"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/dynamodb",
-			"Rev": "d769f530bfa9b2a5babddb3fc0f578acc0d456d3"
+			"Rev": "3ac7bf7a47d159a033b107610db8a1b6575507a4"
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "68415e7123da32b07eab49c96d2c4d6158360e9b"
+			"Rev": "b982704f8bb716bb608144408cff30e15fbde841"
 		},
 		{
 			"ImportPath": "github.com/gorilla/schema",
 			"Rev": "ec21cc92d9d6e15cdb9f82fb6d686875c6857eee"
 		},
 		{
-			"ImportPath": "github.com/jtolds/gls",
-			"Rev": "9a4a02dbe491bef4bab3c24fd9f3087d6c4c6690"
-		},
-		{
-			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-74-g8ad2b29",
-			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
-		},
-		{
-			"ImportPath": "github.com/lib/pq/oid",
-			"Comment": "go1.0-cutoff-74-g8ad2b29",
-			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Comment": "v1.1-34-gd8ff598",
+			"Rev": "d8ff598a019f2c7bad0980917a588193cf26666e"
 		},
 		{
 			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
@@ -80,8 +38,8 @@
 		},
 		{
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
-			"Comment": "0.7.0-37-gdcd7417",
-			"Rev": "dcd7417a58531c608dcd6db8d8b72b11f4b357d7"
+			"Comment": "0.7.0-39-g3b78d7a",
+			"Rev": "3b78d7a77f51ccbc364d4bc170920153022cfd08"
 		},
 		{
 			"ImportPath": "github.com/prometheus/client_model/go",
@@ -90,39 +48,35 @@
 		},
 		{
 			"ImportPath": "github.com/prometheus/common/expfmt",
-			"Rev": "e5bcf05f3c1b99df9892e773349e88d038f0e93c"
+			"Rev": "a6ab08426bb262e2d190097751f5cfd1cfdfd17d"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg",
+			"Rev": "a6ab08426bb262e2d190097751f5cfd1cfdfd17d"
 		},
 		{
 			"ImportPath": "github.com/prometheus/common/model",
-			"Rev": "e5bcf05f3c1b99df9892e773349e88d038f0e93c"
+			"Rev": "a6ab08426bb262e2d190097751f5cfd1cfdfd17d"
 		},
 		{
 			"ImportPath": "github.com/prometheus/procfs",
-			"Rev": "3b231703e7dd0ca93302b5242ad6aeb4b5c603a2"
+			"Rev": "490cc6eb5fa45bf8a8b7b73c8bc82a8160e8531d"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",
 			"Rev": "5e4ce6bc0ecd3472f6f943666d84876691be2ced"
 		},
 		{
-			"ImportPath": "github.com/satori/go.uuid",
-			"Rev": "7c7f2020c4c9491594b85767967f4619c2fa75f9"
-		},
-		{
-			"ImportPath": "github.com/vaughan0/go-ini",
-			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
-		},
-		{
-			"ImportPath": "golang.org/x/net/context",
-			"Rev": "042ba42fa6633b34205efc66ba5719cd3afd8d38"
-		},
-		{
 			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "f64b50fbea64174967a8882830d621a18ee1548e"
+			"Rev": "833a04a10549a95dc34458c195cbad61bbb6cb4d"
+		},
+		{
+			"ImportPath": "gopkg.in/SpirentOrion/trace.v2",
+			"Rev": "5f247c43838f65cf00f57ed5f375bc99e68b2c51"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "49c95bdc21843256fb6c4e0d370a05f24a0bf213"
+			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
 		}
 	]
 }

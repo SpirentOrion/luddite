@@ -16,7 +16,7 @@ func TestNotImplementedResourceId(t *testing.T) {
 
 func TestNotImplementedResourceList(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.List(nil, nil)
+	ret, _ := ni.List(nil)
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
@@ -24,7 +24,7 @@ func TestNotImplementedResourceList(t *testing.T) {
 
 func TestNotImplementedResourceGet(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.Get(nil, nil, "")
+	ret, _ := ni.Get(nil, "")
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
@@ -32,7 +32,7 @@ func TestNotImplementedResourceGet(t *testing.T) {
 
 func TestNotImplementedResourceCreate(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.Create(nil, nil, nil)
+	ret, _ := ni.Create(nil, nil)
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
@@ -40,7 +40,7 @@ func TestNotImplementedResourceCreate(t *testing.T) {
 
 func TestNotImplementedResourceUpdate(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.Update(nil, nil, "", nil)
+	ret, _ := ni.Update(nil, "", nil)
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
@@ -48,7 +48,7 @@ func TestNotImplementedResourceUpdate(t *testing.T) {
 
 func TestNotImplementedResourceDelete(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.Delete(nil, nil, "")
+	ret, _ := ni.Delete(nil, "")
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
@@ -56,7 +56,7 @@ func TestNotImplementedResourceDelete(t *testing.T) {
 
 func TestNotImplementedResourceAction(t *testing.T) {
 	ni := &NotImplementedResource{}
-	ret, _ := ni.Action(nil, nil, "", "")
+	ret, _ := ni.Action(nil, "", "")
 	if ret != http.StatusNotImplemented {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}

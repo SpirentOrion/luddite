@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/K-Phoen/negotiation"
-	"golang.org/x/net/context"
 )
 
 // FormatNegotiator is middleware that handles Content-Type negotiation.
@@ -24,7 +23,7 @@ func NewNegotiator(acceptedFormats []string) *FormatNegotiator {
 	}
 }
 
-func (n *FormatNegotiator) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *http.Request, next ContextHandlerFunc) {
+func (n *FormatNegotiator) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	// If no Accept header was included, default to the first accepted format
 	accept := req.Header.Get(HeaderAccept)
 	if accept == "" {
@@ -39,5 +38,5 @@ func (n *FormatNegotiator) HandleHTTP(ctx context.Context, rw http.ResponseWrite
 	}
 
 	rw.Header().Set(HeaderContentType, format.Value)
-	next(ctx, rw, req)
+	next(rw, req)
 }

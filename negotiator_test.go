@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 func TestDefaultContentType(t *testing.T) {
@@ -14,7 +12,7 @@ func TestDefaultContentType(t *testing.T) {
 
 	n := NewNegotiator([]string{ContentTypeJson, ContentTypeXml})
 
-	n.HandleHTTP(context.Background(), rw, req, func(context.Context, http.ResponseWriter, *http.Request) {
+	n.HandleHTTP(rw, req, func(http.ResponseWriter, *http.Request) {
 		if rw.Header().Get(HeaderContentType) != ContentTypeJson {
 			t.Error("default content type not negotiated")
 		}

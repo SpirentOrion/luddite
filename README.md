@@ -37,14 +37,14 @@ each service:
   requests/responses in a structured JSON format.  Metrics
   increments basic request/response stats.  Recovery handles panics
   that occur in HTTP method handlers and optionally includes stack
-  traces in 500 responses.
+  traces in 500 responses.  Also makes the `Service` instance,
+  request id, and response headers available to resource handlers as
+  part of the request [context][context].
 * Negotiation: Performs JSON (default) and XML content negotiation
   based on HTTP requests' `Accept` headers.
-* Context: Performs API version selection and enforces the service's min/max
-  supported version constraints. Also makes the `Service` instance, selected API
-  version, request id, and response headers available to resource handlers as
-  part of their dispatch [context][context].
-
+* Version: Performs API version selection and enforces the service's min/max
+  supported version constraints.  Makes the selected API version available
+  to resource handlers as part of the request [context][context].
 [context]: http://blog.golang.org/context
 
 ## TODO

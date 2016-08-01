@@ -25,9 +25,9 @@ service:
   trace:
     enabled: true
     buffer: 100
-    recorder: yaml
+    recorder: json
     params:
-      path: trace.yaml
+      path: trace.json
   transport:
     tls: false
     cert_file_path:

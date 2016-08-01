@@ -1,19 +1,19 @@
 package luddite
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/SpirentOrion/logrus"
-	"github.com/SpirentOrion/luddite/datastore"
-	"github.com/SpirentOrion/trace"
-	"github.com/SpirentOrion/trace/dynamorec"
-	"github.com/SpirentOrion/trace/yamlrec"
 	"github.com/rs/cors"
-	"golang.org/x/net/context"
+	"gopkg.in/SpirentOrion/trace.v2"
 )
 
 const MAX_STACK_SIZE = 8 * 1024
@@ -26,6 +26,8 @@ const MAX_STACK_SIZE = 8 * 1024
 // handles panics that occur in HTTP method handlers and optionally
 // includes stack traces in 500 responses.
 type Bottom struct {
+	s             Service
+	ctx           context.Context
 	defaultLogger *log.Logger
 	accessLogger  *log.Logger
 	respStacks    bool
@@ -34,8 +36,12 @@ type Bottom struct {
 }
 
 // NewBottom returns a new Bottom instance.
-func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger) *Bottom {
+func NewBottom(s Service, defaultLogger, accessLogger *log.Logger) *Bottom {
+	config := s.Config()
+
 	b := &Bottom{
+		s:             s,
+		ctx:           context.Background(),
 		defaultLogger: defaultLogger,
 		accessLogger:  accessLogger,
 		respStacks:    config.Debug.Stacks,
@@ -65,51 +71,51 @@ func NewBottom(config *ServiceConfig, defaultLogger, accessLogger *log.Logger) *
 			rec trace.Recorder
 			err error
 		)
-		switch config.Trace.Recorder {
-		case datastore.YAML_PROVIDER:
-			var p *datastore.YAMLParams
-			p, err = datastore.NewYAMLParams(config.Trace.Params)
-			if err != nil {
-				break
+		if rec = recorders[config.Trace.Recorder]; rec == nil {
+			// Automatically create JSON and YAML recorders if they are not otherwise registered
+			switch config.Trace.Recorder {
+			case "json":
+				if p := config.Trace.Params["path"]; p != "" {
+					f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+					if err != nil {
+						break
+					}
+					rec = trace.NewJSONRecorder(f)
+				} else {
+					err = errors.New("JSON trace recorders require a 'path' parameter")
+				}
+			case "yaml":
+				if p := config.Trace.Params["path"]; p != "" {
+					f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+					if err != nil {
+						break
+					}
+					rec = &yamlRecorder{f}
+				} else {
+					err = errors.New("YAML trace recorders require a 'path' parameter")
+				}
+			default:
+				err = fmt.Errorf("unknown trace recorder: %s", config.Trace.Recorder)
 			}
-			var f *os.File
-			f, err = os.OpenFile(p.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-			if err != nil {
-				break
-			}
-			rec, err = yamlrec.New(f)
-			if err != nil {
-				f.Close()
-			}
-		case datastore.DYNAMODB_PROVIDER:
-			var p *datastore.DynamoParams
-			p, err = datastore.NewDynamoParams(config.Trace.Params)
-			if err != nil {
-				break
-			}
-			rec, err = dynamorec.New(p.Region, p.TableName, p.AccessKey, p.SecretKey)
-		default:
-			err = fmt.Errorf("unknown trace recorder: %s", config.Trace.Recorder)
 		}
-
 		if rec != nil {
-			err = trace.Record(rec, config.Trace.Buffer, defaultLogger)
+			ctx := trace.WithBuffer(b.ctx, config.Trace.Buffer)
+			ctx = trace.WithLogger(ctx, defaultLogger)
+			if ctx, err = trace.Record(ctx, rec); err == nil {
+				b.ctx = ctx
+			}
 		}
-
 		if err != nil {
 			defaultLogger.Warn("trace recording is not active: ", err)
-		} else {
-			defaultLogger.Debug("recording traces to ", rec)
 		}
 	}
 
 	return b
 }
 
-func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *http.Request, next ContextHandlerFunc) {
+func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	// Start duration measurement ASAP
 	start := time.Now()
-	var latency time.Duration
 
 	// Don't allow panics to escape the bottom handler under any circumstances!
 	defer func() {
@@ -128,77 +134,71 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 		return
 	}
 
-	// For now, always honor incoming id headers. If present, header must be in the form "traceId:parentId"
-	traceId, parentId := b.getRequestTraceIds(req)
-
-	// Start a new trace, either using an existing id (from the request header) or a new one
-	if traceId == 0 {
-		traceId, _ = trace.GenerateId()
-	}
-	s, _ := trace.New(traceId, TraceKindRequest, req.URL.Path)
-	if s != nil {
-		s.ParentId = parentId
-		if req.URL.RawQuery != "" {
-			data := s.Data()
-			data["query"] = req.URL.RawQuery
+	// Create a new context for the request, using either using an existing
+	// trace id (recovered from the X-Request-Id header in the form
+	// "traceId:parentId") or a newly generated one.
+	var (
+		traceId, parentId int64
+		ctx0              context.Context
+	)
+	if hdr := req.Header.Get(HeaderRequestId); hdr != "" {
+		parts := strings.Split(hdr, ":")
+		if len(parts) == 2 {
+			traceId, _ = strconv.ParseInt(parts[0], 10, 64)
+			parentId, _ = strconv.ParseInt(parts[1], 10, 64)
 		}
 	}
-	b.addRequestResponseTraceIds(rw, req, traceId)
+	if traceId > 0 && parentId > 0 {
+		ctx0 = trace.WithTraceID(trace.WithParentID(b.ctx, parentId), traceId)
+	} else {
+		traceId, _ = trace.GenerateID(b.ctx)
+		ctx0 = trace.WithTraceID(b.ctx, traceId)
+	}
+	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
 
-	res := rw.(ResponseWriter)
-	trace.Run(s, func() {
-		// If a panic occurs in a downstream handler, log it, generate a 500 error
-		// response, and annotate the trace with additional panic-related info
-		defer func() {
-			if rcv := recover(); rcv != nil {
-				stack := make([]byte, MAX_STACK_SIZE)
-				stack = stack[:runtime.Stack(stack, false)]
-				b.defaultLogger.WithFields(log.Fields{
-					"stack": string(stack),
-				}).Error(rcv)
+	// Also include our own handler details in the context. Note: We do this
+	// in the bottom middleware to avoid having to make multiple shallow
+	// copies of the HTTP request. Other handler details may be populated by
+	// downstream handlers.
+	ctx0 = withHandlerDetails(ctx0, &handlerDetails{
+		s:          b.s,
+		respWriter: rw,
+	})
 
-				resp := NewError(nil, EcodeInternal, rcv)
-				if b.respStacks {
-					if len(stack) > b.respStackSize {
-						resp.Stack = string(stack[:b.respStackSize])
-					} else {
-						resp.Stack = string(stack)
-					}
-				}
-				WriteResponse(rw, http.StatusInternalServerError, resp)
-				latency = time.Now().Sub(start)
+	// Execute the next HTTP handler in a trace span
+	trace.Do(ctx0, TraceKindRequest, req.URL.Path, func(ctx1 context.Context) {
+		b.handleHTTP(rw.(ResponseWriter), req.WithContext(ctx1), next, start)
+	})
+}
 
-				b.accessLogger.WithFields(log.Fields{
-					"client_addr":   req.RemoteAddr,
-					"forwarded_for": req.Header.Get(HeaderForwardedFor),
-					"proto":         req.Proto,
-					"method":        req.Method,
-					"uri":           req.RequestURI,
-					"status_code":   res.Status(),
-					"size":          res.Size(),
-					"user_agent":    req.UserAgent(),
-					"req_id":        traceId,
-					"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
-					"time_duration": fmt.Sprintf("%.3f", latency.Seconds()*1000),
-				}).Error()
+func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.HandlerFunc, start time.Time) {
+	defer func() {
+		var (
+			latency = time.Now().Sub(start)
+			status  = res.Status()
+			rcv     interface{}
+			stack   string
+		)
 
-				if s != nil {
-					data := s.Data()
-					data["panic"] = rcv
-					data["stack"] = string(stack)
-					data["req_method"] = req.Method
-					data["resp_status"] = res.Status()
-					data["resp_size"] = res.Size()
+		// If a panic occurs in a downstream handler generate a 500 response
+		if rcv = recover(); rcv != nil {
+			stackBuffer := make([]byte, MAX_STACK_SIZE)
+			stack = string(stackBuffer[:runtime.Stack(stackBuffer, false)])
+			b.defaultLogger.WithFields(log.Fields{"stack": stack}).Error(rcv)
+
+			resp := NewError(nil, EcodeInternal, rcv)
+			if b.respStacks {
+				if len(stack) > b.respStackSize {
+					resp.Stack = stack[:b.respStackSize]
+				} else {
+					resp.Stack = stack
 				}
 			}
-		}()
-
-		// Invoke the next handler
-		next(ctx, rw, req)
+			status = http.StatusInternalServerError
+			WriteResponse(res, status, resp)
+		}
 
 		// Log the request
-		status := res.Status()
-		latency = time.Now().Sub(start)
 		entry := b.accessLogger.WithFields(log.Fields{
 			"client_addr":   req.RemoteAddr,
 			"forwarded_for": req.Header.Get(HeaderForwardedFor),
@@ -208,8 +208,8 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 			"status_code":   status,
 			"size":          res.Size(),
 			"user_agent":    req.UserAgent(),
-			"req_id":        traceId,
-			"api_version":   rw.Header().Get(HeaderSpirentApiVersion),
+			"req_id":        res.Header().Get(HeaderRequestId),
+			"api_version":   res.Header().Get(HeaderSpirentApiVersion),
 			"time_duration": fmt.Sprintf("%.3f", latency.Seconds()*1000),
 		})
 		if status/100 != 5 {
@@ -219,27 +219,20 @@ func (b *Bottom) HandleHTTP(ctx context.Context, rw http.ResponseWriter, req *ht
 		}
 
 		// Annotate the trace
-		if s != nil {
-			data := s.Data()
+		if data := trace.Annotate(req.Context()); data != nil {
 			data["req_method"] = req.Method
 			data["resp_status"] = res.Status()
 			data["resp_size"] = res.Size()
+			if req.URL.RawQuery != "" {
+				data["query"] = req.URL.RawQuery
+			}
+			if rcv != nil {
+				data["panic"] = rcv
+				data["stack"] = stack
+			}
 		}
-	})
-}
+	}()
 
-func (b *Bottom) getRequestTraceIds(req *http.Request) (traceId, parentId int64) {
-	if hdr := req.Header.Get(HeaderRequestId); hdr != "" {
-		n, _ := fmt.Sscanf(hdr, "%d:%d", &traceId, &parentId)
-		if n < 2 || traceId < 1 || parentId < 1 {
-			traceId = 0
-			parentId = 0
-		}
-	}
-	return
-}
-
-func (b *Bottom) addRequestResponseTraceIds(rw http.ResponseWriter, req *http.Request, traceId int64) {
-	traceIdStr := fmt.Sprint(traceId)
-	rw.Header().Set(HeaderRequestId, traceIdStr)
+	// Invoke the next handler
+	next(res, req)
 }
