@@ -24,6 +24,7 @@ const (
 	HeaderSpirentMetaPrefix    = "X-Spirent-Meta-"
 	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
 	HeaderSpirentResourceNonce = "X-Spirent-Resource-Nonce"
+	HeaderUserAgent            = "User-Agent"
 
 	CursorNever = "never"
 )
