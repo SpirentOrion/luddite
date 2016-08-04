@@ -43,9 +43,6 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 	if p.User == "" {
 		return nil, errors.New("Postgres providers require a 'user' parameter")
 	}
-	if p.Password == "" {
-		return nil, errors.New("Postgres providers require a 'password' parameter")
-	}
 	if p.DbName == "" {
 		return nil, errors.New("Postgres providers require a 'db_name' parameter")
 	}

@@ -45,7 +45,7 @@ func TestNewPostgresParams(t *testing.T) {
 	}
 
 	params = map[string]string{}
-	_, err = NewDynamoParams(params)
+	_, err = NewPostgresParams(params)
 	if err == nil {
 		t.Error("expected error for missing parameters")
 	}
