@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	log "github.com/SpirentOrion/logrus"
 	"github.com/lib/pq"
@@ -66,8 +67,8 @@ func NewPostgresParams(params map[string]string) (*PostgresParams, error) {
 }
 
 func NewPostgresDb(params *PostgresParams, logger *log.Logger) (*SqlDb, error) {
-	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
-		params.User, params.Password, params.DbName, params.Host, params.Port, params.SslMode))
+	db, err := sql.Open(POSTGRES_PROVIDER, fmt.Sprintf("user=%s password='%s' dbname=%s host=%s port=%d sslmode=%s",
+		params.User, strings.Replace(params.Password, "'", "\\'", -1), params.DbName, params.Host, params.Port, params.SslMode))
 	if err != nil {
 		return nil, err
 	}
