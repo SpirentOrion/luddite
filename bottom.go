@@ -76,8 +76,8 @@ func NewBottom(s Service, defaultLogger, accessLogger *log.Logger) *Bottom {
 			switch config.Trace.Recorder {
 			case "json":
 				if p := config.Trace.Params["path"]; p != "" {
-					f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-					if err != nil {
+					var f *os.File
+					if f, err = os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
 						break
 					}
 					rec = trace.NewJSONRecorder(f)
@@ -86,8 +86,8 @@ func NewBottom(s Service, defaultLogger, accessLogger *log.Logger) *Bottom {
 				}
 			case "yaml":
 				if p := config.Trace.Params["path"]; p != "" {
-					f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-					if err != nil {
+					var f *os.File
+					if f, err = os.OpenFile(p, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
 						break
 					}
 					rec = &yamlRecorder{f}

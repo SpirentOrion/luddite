@@ -1,6 +1,4 @@
-BUILD_PATH	?= .
-EXAMPLE_DIR	= ./example
-EXAMPLE_BIN	= example
+BUILD_PATH ?= .
 
 .PHONY: all restore rebase resave build example test clean
 
@@ -16,10 +14,10 @@ resave:
 	godep save ./...
 
 build:
-	cd $(BUILD_PATH) && go build -a *.go
+	cd $(BUILD_PATH) && go tool vet -all -composites=false -shadow=true . && go build -a *.go
 
 example:
-	cd $(BUILD_PATH)/example && go build -a -o $(EXAMPLE_BIN) *.go
+	cd $(BUILD_PATH)/example && go build -a -o example *.go
 
 test:
 	cd $(BUILD_PATH) && go test -race *.go
