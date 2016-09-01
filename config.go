@@ -59,7 +59,7 @@ type ServiceConfig struct {
 		Enabled bool
 		// Buffer sets the trace package's buffer size.
 		Buffer int
-		// Recorder selects the trace recorder implementation: yaml | dynamodb.
+		// Recorder selects the trace recorder implementation: json | other.
 		Recorder string
 		// Params is a map of trace recorder parameters.
 		Params map[string]string

@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 func TestMinApiVersionConstraint(t *testing.T) {
@@ -13,9 +11,9 @@ func TestMinApiVersionConstraint(t *testing.T) {
 	req.Header.Add(HeaderSpirentApiVersion, "1")
 	rw := httptest.NewRecorder()
 
-	c := NewContext(nil, 2, 42)
+	v := NewVersion(2, 42)
 
-	c.HandleHTTP(context.Background(), rw, req, func(context.Context, http.ResponseWriter, *http.Request) {
+	v.HandleHTTP(rw, req, func(http.ResponseWriter, *http.Request) {
 		if rw.Code != http.StatusGone {
 			t.Error("expected 410/Gone response for outdated version")
 		}
@@ -27,9 +25,9 @@ func TestMaxApiVersionConstraint(t *testing.T) {
 	req.Header.Add(HeaderSpirentApiVersion, "43")
 	rw := httptest.NewRecorder()
 
-	c := NewContext(nil, 2, 42)
+	v := NewVersion(2, 42)
 
-	c.HandleHTTP(context.Background(), rw, req, func(context.Context, http.ResponseWriter, *http.Request) {
+	v.HandleHTTP(rw, req, func(http.ResponseWriter, *http.Request) {
 		if rw.Code != http.StatusNotImplemented {
 			t.Error("expected 501/Not Implemented response for future version")
 		}
@@ -37,13 +35,15 @@ func TestMaxApiVersionConstraint(t *testing.T) {
 }
 
 func TestApiVersionContext(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Add(HeaderSpirentApiVersion, "1")
+	req0, _ := http.NewRequest("GET", "/", nil)
+	req0.Header.Add(HeaderSpirentApiVersion, "1")
+	req0 = req0.WithContext(withHandlerDetails(req0.Context(), &handlerDetails{}))
 	rw := httptest.NewRecorder()
 
-	c := NewContext(nil, 1, 1)
+	v := NewVersion(1, 1)
 
-	c.HandleHTTP(context.Background(), rw, req, func(ctx context.Context, _ http.ResponseWriter, _ *http.Request) {
+	v.HandleHTTP(rw, req0, func(_ http.ResponseWriter, req1 *http.Request) {
+		ctx := req1.Context()
 		if ContextApiVersion(ctx) != 1 {
 			t.Error("missing API version in context")
 		}

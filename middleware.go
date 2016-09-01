@@ -1,27 +1,23 @@
 package luddite
 
-import (
-	"net/http"
-
-	"golang.org/x/net/context"
-)
+import "net/http"
 
 type middleware struct {
 	handler Handler
 	next    *middleware
 }
 
-func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	m.handler.HandleHTTP(context.Background(), NewResponseWriter(rw), r, m.next.dispatchHandler)
+func (m *middleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	m.handler.HandleHTTP(NewResponseWriter(rw), req, m.next.dispatchHandler)
 }
 
-func (m *middleware) dispatchHandler(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	m.handler.HandleHTTP(ctx, rw, r, m.next.dispatchHandler)
+func (m *middleware) dispatchHandler(rw http.ResponseWriter, req *http.Request) {
+	m.handler.HandleHTTP(rw, req, m.next.dispatchHandler)
 }
 
 func voidMiddleware() *middleware {
 	return &middleware{
-		handler: HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request, next ContextHandlerFunc) {}),
+		handler: HandlerFunc(func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {}),
 		next:    &middleware{},
 	}
 }

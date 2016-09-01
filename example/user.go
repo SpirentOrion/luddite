@@ -7,7 +7,6 @@ import (
 
 	log "github.com/SpirentOrion/logrus"
 	"github.com/SpirentOrion/luddite"
-	"golang.org/x/net/context"
 )
 
 type User struct {
@@ -40,7 +39,7 @@ func (r *userResource) Id(value interface{}) string {
 	return u.Name
 }
 
-func (r *userResource) List(ctx context.Context, req *http.Request) (int, interface{}) {
+func (r *userResource) List(req *http.Request) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -53,7 +52,7 @@ func (r *userResource) List(ctx context.Context, req *http.Request) (int, interf
 	return http.StatusOK, us
 }
 
-func (r *userResource) Get(ctx context.Context, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Get(req *http.Request, id string) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -64,7 +63,7 @@ func (r *userResource) Get(ctx context.Context, req *http.Request, id string) (i
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Create(ctx context.Context, req *http.Request, value interface{}) (int, interface{}) {
+func (r *userResource) Create(req *http.Request, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
@@ -75,7 +74,7 @@ func (r *userResource) Create(ctx context.Context, req *http.Request, value inte
 	}
 	r.users[u.Name] = u
 
-	logger := luddite.ContextLogger(ctx)
+	logger := luddite.ContextLogger(req.Context())
 	logger.WithFields(log.Fields{
 		"event": "UserCreated",
 		"name":  u.Name,
@@ -84,7 +83,7 @@ func (r *userResource) Create(ctx context.Context, req *http.Request, value inte
 	return http.StatusCreated, u.SafeExport()
 }
 
-func (r *userResource) Update(ctx context.Context, req *http.Request, id string, value interface{}) (int, interface{}) {
+func (r *userResource) Update(req *http.Request, id string, value interface{}) (int, interface{}) {
 	u := value.(*User)
 	r.Lock()
 	defer r.Unlock()
@@ -95,7 +94,7 @@ func (r *userResource) Update(ctx context.Context, req *http.Request, id string,
 	}
 	r.users[u.Name] = u
 
-	logger := luddite.ContextLogger(ctx)
+	logger := luddite.ContextLogger(req.Context())
 	logger.WithFields(log.Fields{
 		"event": "UserUpdated",
 		"name":  u.Name,
@@ -104,13 +103,13 @@ func (r *userResource) Update(ctx context.Context, req *http.Request, id string,
 	return http.StatusOK, u.SafeExport()
 }
 
-func (r *userResource) Delete(ctx context.Context, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) Delete(req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 
 	delete(r.users, id)
 
-	logger := luddite.ContextLogger(ctx)
+	logger := luddite.ContextLogger(req.Context())
 	logger.WithFields(log.Fields{
 		"event": "UserDeleted",
 		"name":  id,
@@ -119,16 +118,16 @@ func (r *userResource) Delete(ctx context.Context, req *http.Request, id string)
 	return http.StatusNoContent, nil
 }
 
-func (r *userResource) Action(ctx context.Context, req *http.Request, id string, action string) (int, interface{}) {
+func (r *userResource) Action(req *http.Request, id string, action string) (int, interface{}) {
 	switch action {
 	case "reset_password":
-		return r.resetPassword(ctx, req, id)
+		return r.resetPassword(req, id)
 	default:
 		return http.StatusNotFound, nil
 	}
 }
 
-func (r *userResource) resetPassword(ctx context.Context, req *http.Request, id string) (int, interface{}) {
+func (r *userResource) resetPassword(req *http.Request, id string) (int, interface{}) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -138,7 +137,7 @@ func (r *userResource) resetPassword(ctx context.Context, req *http.Request, id 
 	}
 	u.Password = "secret"
 
-	logger := luddite.ContextLogger(ctx)
+	logger := luddite.ContextLogger(req.Context())
 	logger.WithFields(log.Fields{
 		"event": "UserPasswordReset",
 		"name":  id,

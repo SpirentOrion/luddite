@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/SpirentOrion/httprouter"
-	"golang.org/x/net/context"
+	"github.com/julienschmidt/httprouter"
 )
 
 type SchemaHandler struct {
@@ -21,9 +20,8 @@ func NewSchemaHandler(filePath, filePattern string) *SchemaHandler {
 	return &SchemaHandler{filePath, filePattern, http.FileServer(http.Dir(filePath))}
 }
 
-func (h *SchemaHandler) ServeHTTP(ctx context.Context, rw http.ResponseWriter, req *http.Request) {
-	ps := httprouter.ContextParams(ctx)
-	versionStr := ps.ByName("version")
+func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	versionStr := params.ByName("version")
 
 	// Glob schema files for the requested API version
 	version, err := strconv.Atoi(versionStr)
