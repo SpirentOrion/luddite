@@ -5,6 +5,8 @@ service:
     enabled: true
     allowed_origins: []
     allowed_methods: []
+    allowed_headers: [Authorization, Content-Type, If-Match, If-None-Match, X-Spirent-Inhibit-Paging, X-Spirent-Resource-Nonce]
+    exposed_headers: [Content-Disposition, ETag, Location, X-Spirent-Api-Version, X-Spirent-Next-Link, X-Spirent-Resource-Nonce]
     allow_credentials: true
   debug:
     stacks: true

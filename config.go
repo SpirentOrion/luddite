@@ -17,6 +17,10 @@ type ServiceConfig struct {
 		AllowedOrigins []string `yaml:"allowed_origins"`
 		// AllowedMethods contains the list of methods the client is allowed to use with cross-domain requests. Defaults to "GET", "POST", "PUT" and "DELETE" on an empty list.
 		AllowedMethods []string `yaml:"allowed_methods"`
+		// AllowedHeaders contains the list of non-simple headers clients are allowed to use in cross-origin requests.  An empty list is interpreted literally however "Origin" is always appended.
+		AllowedHeaders []string `yaml:"allowed_headers"`
+		// ExposedHeaders contains the list of non-simple headers clients are allowed to access in cross-origin responses.  An empty list is interpreted literally.
+		ExposedHeaders []string `yaml:"exposed_headers"`
 		// AllowCredentials indicates whether the request can include user credentials like cookies or HTTP auth.
 		AllowCredentials bool `yaml:"allow_credentials"`
 	}
