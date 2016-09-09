@@ -57,6 +57,8 @@ func NewBottom(s Service, defaultLogger, accessLogger *log.Logger) *Bottom {
 		corsOptions := cors.Options{
 			AllowedOrigins:   config.Cors.AllowedOrigins,
 			AllowedMethods:   config.Cors.AllowedMethods,
+			AllowedHeaders:   config.Cors.AllowedHeaders,
+			ExposedHeaders:   config.Cors.ExposedHeaders,
 			AllowCredentials: config.Cors.AllowCredentials,
 		}
 		if len(corsOptions.AllowedMethods) == 0 {
@@ -128,10 +130,12 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 	}()
 
-	// Handle CORS preflight requests prior to tracing
-	if b.cors != nil && req.Method == "OPTIONS" {
+	// Handle CORS prior to tracing
+	if b.cors != nil {
 		b.cors.HandlerFunc(rw, req)
-		return
+		if req.Method == "OPTIONS" {
+			return
+		}
 	}
 
 	// Create a new context for the request, using either using an existing
