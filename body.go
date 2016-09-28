@@ -6,6 +6,8 @@ import (
 	"encoding/xml"
 	"mime"
 	"net/http"
+	"reflect"
+	"time"
 
 	"github.com/gorilla/schema"
 )
@@ -22,6 +24,19 @@ const (
 )
 
 var formDecoder = schema.NewDecoder()
+
+func init() {
+	t := time.Time{}
+	formDecoder.RegisterConverter(t, ConvertTime)
+}
+
+func ConvertTime(value string) reflect.Value {
+	if t, err := time.Parse(time.RFC3339, value); err == nil {
+		return reflect.ValueOf(t)
+	} else {
+		return reflect.Value{}
+	}
+}
 
 func ReadRequest(req *http.Request, v interface{}) error {
 	ct := req.Header.Get(HeaderContentType)
