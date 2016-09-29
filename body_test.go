@@ -51,8 +51,7 @@ func TestReadJson(t *testing.T) {
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if v.Id != sampleId {
@@ -85,8 +84,7 @@ func TestWriteJson(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeJson)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -108,8 +106,7 @@ func TestReadXml(t *testing.T) {
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if v.Id != sampleId {
@@ -142,8 +139,7 @@ func TestWriteXml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeXml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -165,8 +161,7 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -186,8 +181,7 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, sampleData); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -215,8 +209,7 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -230,8 +223,7 @@ func TestReadUrlencoded(t *testing.T) {
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if v.Id != sampleId {

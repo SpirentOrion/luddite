@@ -33,9 +33,8 @@ func init() {
 func ConvertTime(value string) reflect.Value {
 	if t, err := time.Parse(time.RFC3339, value); err == nil {
 		return reflect.ValueOf(t)
-	} else {
-		return reflect.Value{}
 	}
+	return reflect.Value{}
 }
 
 func ReadRequest(req *http.Request, v interface{}) error {
