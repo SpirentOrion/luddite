@@ -21,11 +21,12 @@ type sample struct {
 }
 
 const (
-	sampleId       = 1234
-	sampleName     = "dave"
-	sampleData     = "Hello world"
-	sampleJsonBody = "{\"id\":1234,\"name\":\"dave\",\"flag\":true,\"data\":\"SGVsbG8gd29ybGQ=\",\"timestamp\":\"2015-03-18T14:30:00Z\"}"
-	sampleXmlBody  = "<sample><id>1234</id><name>dave</name><flag>true</flag><data>Hello world</data><timestamp>2015-03-18T14:30:00Z</timestamp></sample>"
+	sampleId             = 1234
+	sampleName           = "dave"
+	sampleData           = "Hello world"
+	sampleJsonBody       = "{\"id\":1234,\"name\":\"dave\",\"flag\":true,\"data\":\"SGVsbG8gd29ybGQ=\",\"timestamp\":\"2015-03-18T14:30:00Z\"}"
+	sampleXmlBody        = "<sample><id>1234</id><name>dave</name><flag>true</flag><data>Hello world</data><timestamp>2015-03-18T14:30:00Z</timestamp></sample>"
+	sampleUrlencodedBody = "id=1234&name=dave&flag=true&timestamp=2015-03-18T14:30:00Z"
 )
 
 var (
@@ -50,8 +51,7 @@ func TestReadJson(t *testing.T) {
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if v.Id != sampleId {
@@ -84,8 +84,7 @@ func TestWriteJson(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeJson)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -107,8 +106,7 @@ func TestReadXml(t *testing.T) {
 
 	v := &sample{}
 	if err := ReadRequest(req, v); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if v.Id != sampleId {
@@ -141,8 +139,7 @@ func TestWriteXml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeXml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -164,8 +161,7 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -185,8 +181,7 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, sampleData); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
@@ -214,11 +209,33 @@ func TestWriteHtml(t *testing.T) {
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
-		t.Log(err)
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	if rw.Code != http.StatusOK {
 		t.Error("status code never written")
+	}
+}
+
+func TestReadUrlencoded(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(sampleUrlencodedBody))
+	req.Header[HeaderContentType] = []string{ContentTypeWwwFormUrlencoded}
+
+	v := &sample{}
+	if err := ReadRequest(req, v); err != nil {
+		t.Fatal(err)
+	}
+
+	if v.Id != sampleId {
+		t.Error("Urlencoded int deserialization failed")
+	}
+	if v.Name != sampleName {
+		t.Error("Urlencoded string deserialization failed")
+	}
+	if !v.Flag {
+		t.Error("Urlencoded bool deserialization failed")
+	}
+	if v.Timestamp != sampleTimestamp {
+		t.Error("Urlencoded date deserialization failed")
 	}
 }
