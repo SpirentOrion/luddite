@@ -78,7 +78,9 @@ func ReadRequest(req *http.Request, v interface{}) error {
 func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
 	var b []byte
 	if v != nil {
-		if _, ok := v.(error); ok {
+		switch v.(type) {
+		case *Error:
+		case error:
 			v = NewError(nil, EcodeInternal, v)
 		}
 		switch rw.Header().Get(HeaderContentType) {
