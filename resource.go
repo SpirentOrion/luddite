@@ -152,7 +152,6 @@ func AddActionRoute(router *httprouter.Router, basePath string, withId bool, r R
 
 // NotImplementedResource returns HTTP 501 NotImplemented for all HTTP methods.
 type NotImplementedResource struct {
-	Resource
 }
 
 func (r *NotImplementedResource) New() interface{} {

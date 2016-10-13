@@ -158,7 +158,8 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		traceId, _ = trace.GenerateID(b.ctx)
 		ctx0 = trace.WithTraceID(b.ctx, traceId)
 	}
-	rw.Header().Set(HeaderRequestId, fmt.Sprint(traceId))
+	reqId := fmt.Sprint(traceId)
+	rw.Header().Set(HeaderRequestId, reqId)
 
 	// Also include our own handler details in the context. Note: We do this
 	// in the bottom middleware to avoid having to make multiple shallow
@@ -166,6 +167,7 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 	// downstream handlers.
 	ctx0 = withHandlerDetails(ctx0, &handlerDetails{
 		s:          b.s,
+		reqId:      reqId,
 		respWriter: rw,
 	})
 
