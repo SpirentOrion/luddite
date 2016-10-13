@@ -61,9 +61,6 @@ type service struct {
 	schema        *SchemaHandler
 }
 
-// Verify that service implements Service.
-var _ Service = &service{}
-
 func NewService(config *ServiceConfig) (Service, error) {
 	var err error
 

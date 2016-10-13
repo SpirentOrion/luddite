@@ -2,11 +2,9 @@ package luddite
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	log "github.com/SpirentOrion/logrus"
-	"gopkg.in/SpirentOrion/trace.v2"
 )
 
 type contextKeyT int
@@ -15,6 +13,7 @@ const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
 	s          Service
+	reqId      string
 	apiVersion int
 	respWriter http.ResponseWriter
 }
@@ -60,8 +59,8 @@ func ContextApiVersion(ctx context.Context) (apiVersion int) {
 // ContextRequestId returns the current HTTP request's ID value from a
 // context.Context, if possible.
 func ContextRequestId(ctx context.Context) (reqId string) {
-	if traceId := trace.CurrentTraceID(ctx); traceId != 0 {
-		reqId = fmt.Sprint(traceId)
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		reqId = d.reqId
 	}
 	return
 }
