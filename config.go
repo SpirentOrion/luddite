@@ -53,8 +53,8 @@ type ServiceConfig struct {
 		UriPath string `yaml:"uri_path"`
 		// FilePath sets the base file path for the schema.
 		FilePath string `yaml:"file_path"`
-		// FilePattern sets the schema file glob pattern.
-		FilePattern string `yaml:"file_pattern"`
+		// FileName sets the schema file name.
+		FileName string `yaml:"file_name"`
 		// RootRedirect, when true, redirects the service's root to the default schema.
 		RootRedirect bool `yaml:"root_redirect"`
 	}

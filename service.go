@@ -232,7 +232,14 @@ func (s *service) newBottomHandler() (Handler, error) {
 }
 
 func (s *service) newNegotiatorHandler() (Handler, error) {
-	return NewNegotiator([]string{ContentTypeJson, ContentTypeXml, ContentTypeHtml, ContentTypeOctetStream}), nil
+	return NewNegotiator([]string{
+		ContentTypeJson,
+		ContentTypeCss,
+		ContentTypePlain,
+		ContentTypeXml,
+		ContentTypeHtml,
+		ContentTypeOctetStream},
+	), nil
 }
 
 func (s *service) newVersionHandler() (Handler, error) {
@@ -265,11 +272,14 @@ func (s *service) addSchemaRoutes() {
 	config := s.config
 
 	// Serve the various schemas, e.g. /schema/v1, /schema/v2, etc.
-	s.schema = NewSchemaHandler(config.Schema.FilePath, config.Schema.FilePattern)
-	s.router.GET(path.Join(config.Schema.UriPath, "/v:version"), s.schema.ServeHTTP)
+	s.schema = NewSchemaHandler(config.Schema.FilePath, config.Schema.FileName)
+	s.router.GET(path.Join(config.Schema.UriPath, "/v:version/", "*filepath"), s.schema.ServeHTTP)
 
 	// Temporarily redirect (307) the base schema path to the default schema, e.g. /schema -> /schema/v2
-	defaultSchemaPath := path.Join(config.Schema.UriPath, fmt.Sprintf("v%d", config.Version.Max))
+	defaultSchemaPath := fmt.Sprintf("%s/?url=%s",
+		path.Join(config.Schema.UriPath, fmt.Sprintf("v%d", config.Version.Max)),
+		config.Schema.FileName,
+	)
 	s.router.GET(config.Schema.UriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		http.Redirect(rw, req, defaultSchemaPath, http.StatusTemporaryRedirect)
 	})

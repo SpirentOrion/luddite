@@ -15,10 +15,13 @@ import (
 const (
 	ContentTypeMultipartFormData = "multipart/form-data"
 	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
+	ContentTypeCss               = "text/css"
+	ContentTypePlain             = "text/plain"
 	ContentTypeJson              = "application/json"
 	ContentTypeOctetStream       = "application/octet-stream"
 	ContentTypeXml               = "application/xml"
 	ContentTypeHtml              = "text/html"
+	ContentTypeYaml              = "application/yaml"
 
 	maxFormDataMemoryUsage = 10 * 1024 * 1024
 )
