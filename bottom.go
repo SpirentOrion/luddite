@@ -138,13 +138,17 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 	}
 
-	// Create a new context for the request, using either using an existing
-	// trace id (recovered from the X-Request-Id header in the form
-	// "traceId:parentId") or a newly generated one.
-	var (
-		traceId, parentId int64
-		ctx0              context.Context
-	)
+	// Join the request's context to the handler's context where trace
+	// recording may be enabled
+	ctx0, err := trace.Join(req.Context(), b.ctx)
+	if err != nil {
+		ctx0 = req.Context()
+	}
+
+	// Trace using either using an existing trace id (recovered from the
+	// X-Request-Id header in the form "traceId:parentId") or a newly
+	// generated one
+	var traceId, parentId int64
 	if hdr := req.Header.Get(HeaderRequestId); hdr != "" {
 		parts := strings.Split(hdr, ":")
 		if len(parts) == 2 {
@@ -153,10 +157,10 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 	}
 	if traceId > 0 && parentId > 0 {
-		ctx0 = trace.WithTraceID(trace.WithParentID(b.ctx, parentId), traceId)
+		ctx0 = trace.WithTraceID(trace.WithParentID(ctx0, parentId), traceId)
 	} else {
-		traceId, _ = trace.GenerateID(b.ctx)
-		ctx0 = trace.WithTraceID(b.ctx, traceId)
+		traceId, _ = trace.GenerateID(ctx0)
+		ctx0 = trace.WithTraceID(ctx0, traceId)
 	}
 	reqId := fmt.Sprint(traceId)
 	rw.Header().Set(HeaderRequestId, reqId)
