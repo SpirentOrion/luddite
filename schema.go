@@ -26,7 +26,7 @@ func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, par
 		return
 	}
 
-	if strings.HasSuffix(req.URL.Path, ".yaml") {
+	if strings.HasSuffix(req.URL.Path, ".yaml") || strings.HasSuffix(req.URL.Path, ".yml") {
 		rw.Header().Set("Content-Type", ContentTypePlain)
 	}
 

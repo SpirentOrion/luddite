@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -134,9 +133,7 @@ func NewService(config *ServiceConfig) (Service, error) {
 		s.addMetricsRoute()
 	}
 	if config.Schema.Enabled {
-		if err := s.addSchemaRoutes(); err != nil {
-			return nil, err
-		}
+		s.addSchemaRoutes()
 	}
 
 	// Dump goroutine stacks on demand
@@ -271,33 +268,22 @@ func (s *service) addMetricsRoute() {
 	s.router.GET(uriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { h.ServeHTTP(rw, req) })
 }
 
-func (s *service) addSchemaRoutes() error {
+func (s *service) addSchemaRoutes() {
 	config := s.config
-
-	// fileName is a relative path to schema doc e.g. /orion-xxx.html
-	_, err := url.Parse(config.Schema.FileName)
-	if err != nil {
-		return errors.New(
-			fmt.Sprintf(
-				"Schema file path for service was not a valid URL path. fileName %s : error %s",
-				config.Schema.FileName,
-				err.Error(),
-			),
-		)
-	}
 
 	// Serve the various schemas, e.g. /schema/v1, /schema/v2, etc.
 	s.schema = NewSchemaHandler(config.Schema.FilePath)
 
 	s.router.GET(path.Join(config.Schema.UriPath, "/v:version/", "*filepath"), s.schema.ServeHTTP)
 
-	// Temporarily redirect (307) the base schema path to the default schema, e.g. /schema -> /schema/v2/fileName
+	// Temporarily redirect (307) the base schema path to the default schema file, e.g. /schema -> /schema/v2/fileName
 	defaultSchemaPath := path.Join(config.Schema.UriPath, fmt.Sprintf("v%d", config.Version.Max), config.Schema.FileName)
 
 	s.router.GET(config.Schema.UriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		http.Redirect(rw, req, defaultSchemaPath, http.StatusTemporaryRedirect)
 	})
 
+	// Temporarily redirect (307) the version schema path to the default schema file, e.g. /schema/v2 -> /schema/v2/fileName
 	s.router.GET(path.Join(config.Schema.UriPath, "/v:version/"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		http.Redirect(rw, req, defaultSchemaPath, http.StatusTemporaryRedirect)
 	})
@@ -308,8 +294,6 @@ func (s *service) addSchemaRoutes() error {
 			http.Redirect(rw, req, config.Schema.UriPath, http.StatusTemporaryRedirect)
 		})
 	}
-
-	return nil
 }
 
 func openLogFile(logger *log.Logger, logPath string) {
