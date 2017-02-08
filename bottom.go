@@ -162,8 +162,8 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		traceId, _ = trace.GenerateID(ctx0)
 		ctx0 = trace.WithTraceID(ctx0, traceId)
 	}
-	reqId := fmt.Sprint(traceId)
-	rw.Header().Set(HeaderRequestId, reqId)
+	requestId := fmt.Sprint(traceId)
+	rw.Header().Set(HeaderRequestId, requestId)
 
 	// Also include our own handler details in the context. Note: We do this
 	// in the bottom middleware to avoid having to make multiple shallow
@@ -171,7 +171,8 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 	// downstream handlers.
 	ctx0 = withHandlerDetails(ctx0, &handlerDetails{
 		s:          b.s,
-		reqId:      reqId,
+		requestId:  requestId,
+		sessionId:  rw.Header().Get(HeaderSessionId),
 		respWriter: rw,
 	})
 
@@ -209,7 +210,7 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 		}
 
 		// Log the request
-		entry := b.accessLogger.WithFields(log.Fields{
+		fields := log.Fields{
 			"client_addr":   req.RemoteAddr,
 			"forwarded_for": req.Header.Get(HeaderForwardedFor),
 			"proto":         req.Proto,
@@ -218,10 +219,14 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 			"status_code":   status,
 			"size":          res.Size(),
 			"user_agent":    req.UserAgent(),
-			"req_id":        res.Header().Get(HeaderRequestId),
+			"request_id":    res.Header().Get(HeaderRequestId),
 			"api_version":   res.Header().Get(HeaderSpirentApiVersion),
 			"time_duration": fmt.Sprintf("%.3f", latency.Seconds()*1000),
-		})
+		}
+		if sessionId := res.Header().Get(HeaderSessionId); sessionId != "" {
+			fields["session_id"] = sessionId
+		}
+		entry := b.accessLogger.WithFields(fields)
 		if status/100 != 5 {
 			entry.Info()
 		} else {

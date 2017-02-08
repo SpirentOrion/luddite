@@ -13,7 +13,8 @@ const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
 	s          Service
-	reqId      string
+	requestId  string
+	sessionId  string
 	apiVersion int
 	respWriter http.ResponseWriter
 }
@@ -58,9 +59,18 @@ func ContextApiVersion(ctx context.Context) (apiVersion int) {
 
 // ContextRequestId returns the current HTTP request's ID value from a
 // context.Context, if possible.
-func ContextRequestId(ctx context.Context) (reqId string) {
+func ContextRequestId(ctx context.Context) (requestId string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
-		reqId = d.reqId
+		requestId = d.requestId
+	}
+	return
+}
+
+// ContextSessionId returns the current HTTP request's session ID value from a
+// context.Context, if possible.
+func ContextSessionId(ctx context.Context) (sessionId string) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		sessionId = d.sessionId
 	}
 	return
 }
