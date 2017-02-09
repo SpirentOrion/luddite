@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -17,7 +16,7 @@ func NewSchemaHandler(filePath string) *SchemaHandler {
 	return &SchemaHandler{http.FileServer(http.Dir(filePath))}
 }
 
-func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req0 *http.Request, params httprouter.Params) {
 	versionStr := params.ByName("version")
 
 	version, err := strconv.Atoi(versionStr)
@@ -26,15 +25,12 @@ func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, par
 		return
 	}
 
-	if strings.HasSuffix(req.URL.Path, ".yaml") || strings.HasSuffix(req.URL.Path, ".yml") {
-		rw.Header().Set("Content-Type", ContentTypePlain)
-	}
-
 	file := fmt.Sprintf("/v%d/%s", version, params.ByName("filepath"))
-	fileReq, err := http.NewRequest("GET", file, nil)
+	req1, err := http.NewRequest("GET", file, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	h.fileServer.ServeHTTP(rw, fileReq)
+	rw.Header().Del(HeaderContentType)
+	h.fileServer.ServeHTTP(rw, req1)
 }
