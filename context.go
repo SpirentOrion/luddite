@@ -13,6 +13,7 @@ const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
 	s          Service
+	request    *http.Request
 	requestId  string
 	sessionId  string
 	apiVersion int
@@ -53,6 +54,15 @@ func ContextLogger(ctx context.Context) (logger *log.Logger) {
 func ContextApiVersion(ctx context.Context) (apiVersion int) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		apiVersion = d.apiVersion
+	}
+	return
+}
+
+// ContextRequest returns the current HTTP request from a context.Context, if
+// possible.
+func ContextRequest(ctx context.Context) (request *http.Request) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		request = d.request
 	}
 	return
 }

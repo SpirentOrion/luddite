@@ -173,6 +173,7 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		s:          b.s,
 		requestId:  requestId,
 		sessionId:  rw.Header().Get(HeaderSessionId),
+		request:    req,
 		respWriter: rw,
 	})
 
