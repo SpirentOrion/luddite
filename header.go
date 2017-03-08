@@ -22,13 +22,10 @@ const (
 	HeaderRequestId            = "X-Request-Id"
 	HeaderSessionId            = "X-Session-Id"
 	HeaderSpirentApiVersion    = "X-Spirent-Api-Version"
-	HeaderSpirentInhibitPaging = "X-Spirent-Inhibit-Paging"
 	HeaderSpirentNextLink      = "X-Spirent-Next-Link"
 	HeaderSpirentPageSize      = "X-Spirent-Page-Size"
 	HeaderSpirentResourceNonce = "X-Spirent-Resource-Nonce"
 	HeaderUserAgent            = "User-Agent"
-
-	CursorNever = "never"
 )
 
 func RequestId(r *http.Request) string {
@@ -62,9 +59,6 @@ func RequestExternalHost(r *http.Request) string {
 }
 
 func RequestQueryCursor(r *http.Request) string {
-	if _, ok := r.Header[HeaderSpirentInhibitPaging]; ok {
-		return CursorNever
-	}
 	return r.URL.Query().Get("cursor")
 }
 
