@@ -3,7 +3,7 @@ BUILD_PATH ?= .
 ifdef COMSPEC
 	EXAMPLE := example.exe
 else
-  EXAMPLE := example
+	EXAMPLE := example
 endif
 
 .PHONY: all build example test clean
