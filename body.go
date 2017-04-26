@@ -72,6 +72,8 @@ func ReadRequest(req *http.Request, v interface{}) error {
 			return NewError(nil, EcodeDeserializationFailed, err)
 		}
 		return nil
+	case "":
+		return nil
 	default:
 		return NewError(nil, EcodeUnsupportedMediaType, ct)
 	}

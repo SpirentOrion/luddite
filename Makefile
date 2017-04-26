@@ -17,7 +17,7 @@ example:
 	cd $(BUILD_PATH)/example && go build -a -o $(EXAMPLE) *.go
 
 test:
-	cd $(BUILD_PATH) && go test -race 
+	cd $(BUILD_PATH) && go test -race
 
 clean:
 	rm -f $(EXAMPLE_BIN)
