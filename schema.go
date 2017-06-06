@@ -3,7 +3,9 @@ package luddite
 import (
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -25,12 +27,19 @@ func (h *SchemaHandler) ServeHTTP(rw http.ResponseWriter, req0 *http.Request, pa
 		return
 	}
 
-	file := fmt.Sprintf("/v%d/%s", version, params.ByName("filepath"))
+	filepath := params.ByName("filepath")
+	file := fmt.Sprintf("/v%d/%s", version, filepath)
 	req1, err := http.NewRequest("GET", file, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	rw.Header().Del(HeaderContentType)
+	switch strings.ToLower(path.Ext(filepath)) {
+	case ".yaml", ".yml":
+		rw.Header().Set(HeaderContentType, ContentTypeOctetStream)
+	default:
+		rw.Header().Del(HeaderContentType)
+	}
+
 	h.fileServer.ServeHTTP(rw, req1)
 }
