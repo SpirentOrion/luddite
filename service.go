@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path"
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	DEFAULT_METRICS_URI_PATH = "/metrics"
+	DefaultMetricsURIPath  = "/metrics"
+	DefaultProfilerURIPath = "/debug/pprof"
 )
 
 // Service is an interface that implements a standalone RESTful web service.
@@ -130,6 +132,9 @@ func NewService(config *ServiceConfig) (Service, error) {
 	// Install default http handlers
 	if s.config.Metrics.Enabled {
 		s.addMetricsRoute()
+	}
+	if s.config.Profiler.Enabled {
+		s.addProfilerRoutes()
 	}
 	if config.Schema.Enabled {
 		s.addSchemaRoutes()
@@ -260,11 +265,27 @@ func (s *service) newRouterHandler() (Handler, error) {
 func (s *service) addMetricsRoute() {
 	uriPath := s.config.Metrics.UriPath
 	if uriPath == "" {
-		uriPath = DEFAULT_METRICS_URI_PATH
+		uriPath = DefaultMetricsURIPath
 	}
 
 	h := prometheus.UninstrumentedHandler()
 	s.router.GET(uriPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { h.ServeHTTP(rw, req) })
+}
+
+func (s *service) addProfilerRoutes() {
+	uriPath := s.config.Profiler.UriPath
+	if uriPath == "" {
+		uriPath = DefaultProfilerURIPath
+	}
+
+	s.router.GET(path.Join(uriPath, "/"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Index(rw, req) })
+	s.router.GET(path.Join(uriPath, "/cmdline"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Cmdline(rw, req) })
+	s.router.GET(path.Join(uriPath, "/profile"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Profile(rw, req) })
+	s.router.POST(path.Join(uriPath, "/profile"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Profile(rw, req) })
+	s.router.GET(path.Join(uriPath, "/symbol"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Symbol(rw, req) })
+	s.router.POST(path.Join(uriPath, "/symbol"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Symbol(rw, req) })
+	s.router.GET(path.Join(uriPath, "/trace"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Trace(rw, req) })
+	s.router.POST(path.Join(uriPath, "/trace"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) { pprof.Trace(rw, req) })
 }
 
 func (s *service) addSchemaRoutes() {
