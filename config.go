@@ -46,6 +46,12 @@ type ServiceConfig struct {
 		// UriPath sets the metrics path. Defaults to "/metrics".
 		UriPath string `yaml:"uri_path"`
 	}
+	Profiler struct {
+		// Enabled, when true, enables the service's profiling endpoints.
+		Enabled bool
+		// UriPath sets the profiler path. Defaults to "/debug/pprof".
+		UriPath string `yaml:"uri_path"`
+	}
 	Schema struct {
 		// Enabled, when true, self-serve the service's own schema.
 		Enabled bool
