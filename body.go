@@ -15,6 +15,8 @@ import (
 const (
 	ContentTypeMultipartFormData = "multipart/form-data"
 	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
+	ContentTypeGif               = "image/gif"
+	ContentTypePng               = "image/png"
 	ContentTypeCss               = "text/css"
 	ContentTypeHtml              = "text/html"
 	ContentTypePlain             = "text/plain"
