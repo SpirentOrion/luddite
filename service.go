@@ -242,6 +242,8 @@ func (s *service) newNegotiatorHandler() (Handler, error) {
 		ContentTypePlain,
 		ContentTypeXml,
 		ContentTypeHtml,
+		ContentTypeGif,
+		ContentTypePng,
 		ContentTypeOctetStream},
 	), nil
 }
