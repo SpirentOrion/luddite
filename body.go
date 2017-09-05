@@ -13,15 +13,17 @@ import (
 )
 
 const (
-	ContentTypeMultipartFormData = "multipart/form-data"
-	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
-	ContentTypeGif               = "image/gif"
-	ContentTypePng               = "image/png"
 	ContentTypeCss               = "text/css"
+	ContentTypeGif               = "image/gif"
 	ContentTypeHtml              = "text/html"
-	ContentTypePlain             = "text/plain"
 	ContentTypeJson              = "application/json"
+	ContentTypeMsgpack           = "application/msgpack"
+	ContentTypeMultipartFormData = "multipart/form-data"
 	ContentTypeOctetStream       = "application/octet-stream"
+	ContentTypePlain             = "text/plain"
+	ContentTypePng               = "image/png"
+	ContentTypeProtobuf          = "application/protobuf"
+	ContentTypeWwwFormUrlencoded = "application/x-www-form-urlencoded"
 	ContentTypeXml               = "application/xml"
 
 	maxFormDataMemoryUsage = 10 * 1024 * 1024
