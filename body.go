@@ -132,7 +132,7 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 				json.HTMLEscape(esc, b)
 				b = esc.Bytes()
 			}
-		case ContentTypeOctetStream:
+		default:
 			switch v.(type) {
 			case []byte:
 				b = v.([]byte)
