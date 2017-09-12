@@ -139,7 +139,7 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			case string:
 				b = []byte(v.(string))
 			default:
-				rw.WriteHeader(http.StatusInternalServerError)
+				rw.WriteHeader(http.StatusNotAcceptable)
 				return
 			}
 		}
