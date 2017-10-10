@@ -9,6 +9,7 @@ import (
 
 const (
 	HeaderAccept               = "Accept"
+	HeaderAcceptEncoding       = "Accept-Encoding"
 	HeaderAuthorization        = "Authorization"
 	HeaderContentDisposition   = "Content-Disposition"
 	HeaderContentLength        = "Content-Length"
