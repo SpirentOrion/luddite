@@ -192,21 +192,28 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 			stack   string
 		)
 
-		// If a panic occurs in a downstream handler generate a 500 response
+		// If a panic occurs in a downstream handler generate a fail-safe response
 		if rcv = recover(); rcv != nil {
-			stackBuffer := make([]byte, MAX_STACK_SIZE)
-			stack = string(stackBuffer[:runtime.Stack(stackBuffer, false)])
-			b.defaultLogger.WithFields(log.Fields{"stack": stack}).Error(rcv)
+			var resp *Error
+			if err, ok := rcv.(error); ok && err == context.Canceled {
+				// Context cancelation is not an error: use the 418 status as a log marker
+				status = http.StatusTeapot
+			} else {
+				// Unhandled error: return a 500 response
+				stackBuffer := make([]byte, MAX_STACK_SIZE)
+				stack = string(stackBuffer[:runtime.Stack(stackBuffer, false)])
+				b.defaultLogger.WithFields(log.Fields{"stack": stack}).Error(rcv)
 
-			resp := NewError(nil, EcodeInternal, rcv)
-			if b.respStacks {
-				if len(stack) > b.respStackSize {
-					resp.Stack = stack[:b.respStackSize]
-				} else {
-					resp.Stack = stack
+				resp = NewError(nil, EcodeInternal, rcv)
+				if b.respStacks {
+					if len(stack) > b.respStackSize {
+						resp.Stack = stack[:b.respStackSize]
+					} else {
+						resp.Stack = stack
+					}
 				}
+				status = http.StatusInternalServerError
 			}
-			status = http.StatusInternalServerError
 			WriteResponse(res, status, resp)
 		}
 
