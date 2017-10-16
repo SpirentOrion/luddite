@@ -102,3 +102,12 @@ func ContextCloseNotify(ctx context.Context) (closeNotify <-chan bool) {
 	}
 	return
 }
+
+func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		if rw, ok := d.respWriter.(ResponseWriter); ok {
+			respWriter = rw
+		}
+	}
+	return
+}
