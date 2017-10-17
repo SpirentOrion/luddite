@@ -12,13 +12,22 @@ type contextKeyT int
 const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
-	s          Service
-	request    *http.Request
-	requestId  string
-	sessionId  string
-	apiVersion int
-	respWriter http.ResponseWriter
+	s            Service
+	request      *http.Request
+	requestId    string
+	requestState RequestState
+	sessionId    string
+	apiVersion   int
+	respWriter   http.ResponseWriter
 }
+
+type RequestState int
+
+const (
+	TokenValidationDone RequestState = 1 + iota
+	ResolveDone
+	ReadRequestDone
+)
 
 func withHandlerDetails(ctx context.Context, d *handlerDetails) context.Context {
 	return context.WithValue(ctx, contextHandlerDetailsKey, d)
@@ -108,6 +117,20 @@ func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
 		if rw, ok := d.respWriter.(ResponseWriter); ok {
 			respWriter = rw
 		}
+	}
+	return
+}
+
+func ContextRequestState(ctx context.Context) (reqState RequestState) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		reqState = d.requestState
+	}
+	return
+}
+
+func SetContextRequestState(ctx context.Context, reqState RequestState) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		d.requestState = reqState
 	}
 	return
 }

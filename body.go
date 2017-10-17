@@ -44,6 +44,10 @@ func ConvertTime(value string) reflect.Value {
 }
 
 func ReadRequest(req *http.Request, v interface{}) error {
+	defer func() {
+		SetContextRequestState(req.Context(), ReadRequestDone)
+	}()
+
 	ct := req.Header.Get(HeaderContentType)
 	switch mt, _, _ := mime.ParseMediaType(ct); mt {
 	case ContentTypeMultipartFormData:

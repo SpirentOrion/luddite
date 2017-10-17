@@ -242,8 +242,10 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 		}
 
 		// Annotate the trace
-		if data := trace.Annotate(req.Context()); data != nil {
+		ctx := req.Context()
+		if data := trace.Annotate(ctx); data != nil {
 			data["req_method"] = req.Method
+			data["req_state"] = ContextRequestState(ctx)
 			data["resp_status"] = res.Status()
 			data["resp_size"] = res.Size()
 			if req.URL.RawQuery != "" {
