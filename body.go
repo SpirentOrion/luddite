@@ -44,9 +44,7 @@ func ConvertTime(value string) reflect.Value {
 }
 
 func ReadRequest(req *http.Request, v interface{}) error {
-	defer func() {
-		SetContextRequestProgress(req.Context(), "luddite.ReadRequest")
-	}()
+	SetContextRequestProgress(req.Context(), "luddite", "ReadRequest", "start")
 
 	ct := req.Header.Get(HeaderContentType)
 	switch mt, _, _ := mime.ParseMediaType(ct); mt {
