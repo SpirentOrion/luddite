@@ -113,9 +113,9 @@ func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
 	return
 }
 
-func ContextRequestProgress(ctx context.Context) (reqStepDone string) {
+func ContextRequestProgress(ctx context.Context) (reqProgress string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
-		reqStepDone = d.requestProgress
+		reqProgress = d.requestProgress
 	}
 	return
 }
