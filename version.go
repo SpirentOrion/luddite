@@ -21,18 +21,21 @@ func NewVersion(minVersion, maxVersion int) *Version {
 }
 
 func (v *Version) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	ctx := req.Context()
+	SetContextRequestProgress(ctx, "Version", "HandleHTTP", "begin")
+
 	defaultVersion := v.maxVersion
 
 	// Range check the requested API version and reject requests that fall outside supported version numbers
 	version := RequestApiVersion(req, defaultVersion)
 	if version < v.minVersion {
 		e := NewError(nil, EcodeApiVersionTooOld, v.minVersion)
-		WriteResponse(rw, http.StatusGone, e)
+		WriteResponse(rw, ctx, http.StatusGone, e)
 		return
 	}
 	if version > v.maxVersion {
 		e := NewError(nil, EcodeApiVersionTooNew, v.maxVersion)
-		WriteResponse(rw, http.StatusNotImplemented, e)
+		WriteResponse(rw, ctx, http.StatusNotImplemented, e)
 		return
 	}
 

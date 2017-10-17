@@ -177,6 +177,8 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 		respWriter: rw,
 	})
 
+	SetContextRequestProgress(ctx0, "Bottom", "HandleHTTP", "handler details set")
+
 	// Execute the next HTTP handler in a trace span
 	trace.Do(ctx0, TraceKindRequest, req.URL.Path, func(ctx1 context.Context) {
 		b.handleHTTP(rw.(ResponseWriter), req.WithContext(ctx1), next, start)
@@ -214,7 +216,7 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 				}
 				status = http.StatusInternalServerError
 			}
-			WriteResponse(res, status, resp)
+			WriteResponse(res, req.Context(), status, resp)
 		}
 
 		// Log the request

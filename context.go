@@ -120,9 +120,9 @@ func ContextRequestProgress(ctx context.Context) (reqStepDone string) {
 	return
 }
 
-func SetContextRequestProgress(ctx context.Context, packageName, funcName, stage string) {
+func SetContextRequestProgress(ctx context.Context, typeName, funcName, stage string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
-		d.requestProgress = packageName + "." + funcName + "-" + stage
+		d.requestProgress = typeName + "." + funcName + "-" + stage
 	}
 	return
 }

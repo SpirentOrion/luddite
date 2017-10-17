@@ -2,6 +2,7 @@ package luddite
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"mime"
@@ -44,7 +45,7 @@ func ConvertTime(value string) reflect.Value {
 }
 
 func ReadRequest(req *http.Request, v interface{}) error {
-	SetContextRequestProgress(req.Context(), "luddite", "ReadRequest", "start")
+	SetContextRequestProgress(req.Context(), "luddite", "ReadRequest", "begin")
 
 	ct := req.Header.Get(HeaderContentType)
 	switch mt, _, _ := mime.ParseMediaType(ct); mt {
@@ -85,7 +86,8 @@ func ReadRequest(req *http.Request, v interface{}) error {
 	}
 }
 
-func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
+func WriteResponse(rw http.ResponseWriter, ctx context.Context, status int, v interface{}) (err error) {
+	SetContextRequestProgress(ctx, "luddite", "WriteResponse", "begin")
 	var b []byte
 	if v != nil {
 		switch v.(type) {
