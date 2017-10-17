@@ -45,7 +45,7 @@ func ConvertTime(value string) reflect.Value {
 
 func ReadRequest(req *http.Request, v interface{}) error {
 	defer func() {
-		SetContextRequestState(req.Context(), ReadRequestDone)
+		SetContextRequestProgress(req.Context(), "luddite.ReadRequest")
 	}()
 
 	ct := req.Header.Get(HeaderContentType)
