@@ -12,12 +12,13 @@ type contextKeyT int
 const contextHandlerDetailsKey = contextKeyT(0)
 
 type handlerDetails struct {
-	s          Service
-	request    *http.Request
-	requestId  string
-	sessionId  string
-	apiVersion int
-	respWriter http.ResponseWriter
+	s               Service
+	request         *http.Request
+	requestId       string
+	requestProgress string
+	sessionId       string
+	apiVersion      int
+	respWriter      http.ResponseWriter
 }
 
 func withHandlerDetails(ctx context.Context, d *handlerDetails) context.Context {
@@ -103,11 +104,31 @@ func ContextCloseNotify(ctx context.Context) (closeNotify <-chan bool) {
 	return
 }
 
+// ContextResponseWriter returns the current HTTP request's ResponseWriter from
+// a context.Context, if possible.
 func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		if rw, ok := d.respWriter.(ResponseWriter); ok {
 			respWriter = rw
 		}
+	}
+	return
+}
+
+// ContextRequestProgress returns the current HTTP request's progress trace from
+// a context.Context, if possible.
+func ContextRequestProgress(ctx context.Context) (reqProgress string) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		reqProgress = d.requestProgress
+	}
+	return
+}
+
+// SetContextRequestProgress sets the current HTTP request's progress trace in
+// a context.Context, if possible.
+func SetContextRequestProgress(ctx context.Context, pkgName, funcName, stage string) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		d.requestProgress = pkgName + "." + funcName + "-" + stage
 	}
 	return
 }
