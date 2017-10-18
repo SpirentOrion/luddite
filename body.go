@@ -2,7 +2,6 @@ package luddite
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"mime"
@@ -86,8 +85,7 @@ func ReadRequest(req *http.Request, v interface{}) error {
 	}
 }
 
-func WriteResponse(rw http.ResponseWriter, ctx context.Context, status int, v interface{}) (err error) {
-	SetContextRequestProgress(ctx, "luddite", "WriteResponse", "begin")
+func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error) {
 	var b []byte
 	if v != nil {
 		switch v.(type) {

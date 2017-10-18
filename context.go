@@ -104,6 +104,8 @@ func ContextCloseNotify(ctx context.Context) (closeNotify <-chan bool) {
 	return
 }
 
+// ContextResponseWriter returns the current HTTP request's ResponseWriter from
+// a context.Context, if possible.
 func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		if rw, ok := d.respWriter.(ResponseWriter); ok {
@@ -113,6 +115,8 @@ func ContextResponseWriter(ctx context.Context) (respWriter ResponseWriter) {
 	return
 }
 
+// ContextRequestProgress returns the current HTTP request's progress trace from
+// a context.Context, if possible.
 func ContextRequestProgress(ctx context.Context) (reqProgress string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		reqProgress = d.requestProgress
@@ -120,9 +124,11 @@ func ContextRequestProgress(ctx context.Context) (reqProgress string) {
 	return
 }
 
-func SetContextRequestProgress(ctx context.Context, typeName, funcName, stage string) {
+// SetContextRequestProgress sets the current HTTP request's progress trace in
+// a context.Context, if possible.
+func SetContextRequestProgress(ctx context.Context, pkgName, funcName, stage string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
-		d.requestProgress = typeName + "." + funcName + "-" + stage
+		d.requestProgress = pkgName + "." + funcName + "-" + stage
 	}
 	return
 }

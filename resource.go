@@ -56,9 +56,10 @@ type Resource interface {
 
 func AddListRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.GET(basePath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		SetContextRequestProgress(req.Context(), "Router", "List", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.List", "begin")
 		status, v := r.List(req)
-		WriteResponse(rw, req.Context(), status, v)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.List", "write")
+		WriteResponse(rw, status, v)
 	})
 }
 
@@ -71,9 +72,10 @@ func AddGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 	}
 	router.GET(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		id := params.ByName("id")
-		SetContextRequestProgress(req.Context(), "Router", "Get", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Get", "begin")
 		status, v := r.Get(req, id)
-		WriteResponse(rw, req.Context(), status, v)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Get", "write")
+		WriteResponse(rw, status, v)
 	})
 }
 
@@ -81,10 +83,10 @@ func AddCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 	router.POST(basePath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		v0 := r.New()
 		if err := ReadRequest(req, v0); err != nil {
-			WriteResponse(rw, req.Context(), http.StatusBadRequest, err)
+			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
-		SetContextRequestProgress(req.Context(), "Router", "Create", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Create", "begin")
 		status, v1 := r.Create(req, v0)
 		if status == http.StatusCreated {
 			url := url.URL{
@@ -94,7 +96,8 @@ func AddCreateRoute(router *httprouter.Router, basePath string, r Resource) {
 			}
 			rw.Header().Add(HeaderLocation, url.String())
 		}
-		WriteResponse(rw, req.Context(), status, v1)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Create", "write")
+		WriteResponse(rw, status, v1)
 	})
 }
 
@@ -109,16 +112,17 @@ func AddUpdateRoute(router *httprouter.Router, basePath string, withId bool, r R
 		id := params.ByName("id")
 		v0 := r.New()
 		if err := ReadRequest(req, v0); err != nil {
-			WriteResponse(rw, req.Context(), http.StatusBadRequest, err)
+			WriteResponse(rw, http.StatusBadRequest, err)
 			return
 		}
 		if withId && id != r.Id(v0) {
-			WriteResponse(rw, req.Context(), http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
+			WriteResponse(rw, http.StatusBadRequest, NewError(nil, EcodeResourceIdMismatch))
 			return
 		}
-		SetContextRequestProgress(req.Context(), "Router", "Update", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Update", "begin")
 		status, v1 := r.Update(req, id, v0)
-		WriteResponse(rw, req.Context(), status, v1)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Update", "write")
+		WriteResponse(rw, status, v1)
 	})
 }
 
@@ -131,9 +135,10 @@ func AddDeleteRoute(router *httprouter.Router, basePath string, withId bool, r R
 	}
 	router.DELETE(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		id := params.ByName("id")
-		SetContextRequestProgress(req.Context(), "Router", "Delete", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Delete", "begin")
 		status, v := r.Delete(req, id)
-		WriteResponse(rw, req.Context(), status, v)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Delete", "write")
+		WriteResponse(rw, status, v)
 	})
 }
 
@@ -150,9 +155,10 @@ func AddActionRoute(router *httprouter.Router, basePath string, withId bool, r R
 			id = params.ByName("id")
 		}
 		action := params.ByName("action")
-		SetContextRequestProgress(req.Context(), "Router", "Action", "begin")
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Action", "begin")
 		status, v := r.Action(req, id, action)
-		WriteResponse(rw, req.Context(), status, v)
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Action", "write")
+		WriteResponse(rw, status, v)
 	})
 }
 

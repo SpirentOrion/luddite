@@ -24,8 +24,6 @@ func NewNegotiator(acceptedFormats []string) *FormatNegotiator {
 }
 
 func (n *FormatNegotiator) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	SetContextRequestProgress(req.Context(), "Negotiator", "HandleHTTP", "begin")
-
 	// If no Accept header was included, default to the first accepted format
 	accept := req.Header.Get(HeaderAccept)
 	if accept == "" {

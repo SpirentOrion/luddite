@@ -2,7 +2,6 @@ package luddite
 
 import (
 	"bytes"
-	"context"
 	"encoding/xml"
 	"net/http"
 	"net/http/httptest"
@@ -84,7 +83,7 @@ func TestWriteJson(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeJson)
 
-	if err := WriteResponse(rw, context.Background(), http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,7 +138,7 @@ func TestWriteXml(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeXml)
 
-	if err := WriteResponse(rw, context.Background(), http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)
 	}
 
@@ -161,7 +160,7 @@ func TestWriteHtml(t *testing.T) {
 	rw := httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := WriteResponse(rw, context.Background(), http.StatusOK, []byte(sampleData)); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -181,7 +180,7 @@ func TestWriteHtml(t *testing.T) {
 	rw = httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := WriteResponse(rw, context.Background(), http.StatusOK, sampleData); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, sampleData); err != nil {
 		t.Fatal(err)
 	}
 
@@ -209,7 +208,7 @@ func TestWriteHtml(t *testing.T) {
 	rw = httptest.NewRecorder()
 	rw.Header().Add(HeaderContentType, ContentTypeHtml)
 
-	if err := WriteResponse(rw, context.Background(), http.StatusOK, s); err != nil {
+	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)
 	}
 

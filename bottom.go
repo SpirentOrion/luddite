@@ -170,14 +170,13 @@ func (b *Bottom) HandleHTTP(rw http.ResponseWriter, req *http.Request, next http
 	// copies of the HTTP request. Other handler details may be populated by
 	// downstream handlers.
 	ctx0 = withHandlerDetails(ctx0, &handlerDetails{
-		s:          b.s,
-		requestId:  requestId,
-		sessionId:  rw.Header().Get(HeaderSessionId),
-		request:    req,
-		respWriter: rw,
+		s:               b.s,
+		requestId:       requestId,
+		sessionId:       rw.Header().Get(HeaderSessionId),
+		request:         req,
+		respWriter:      rw,
+		requestProgress: "luddite.Bottom.HandleHTTP - handler details set",
 	})
-
-	SetContextRequestProgress(ctx0, "Bottom", "HandleHTTP", "handler details set")
 
 	// Execute the next HTTP handler in a trace span
 	trace.Do(ctx0, TraceKindRequest, req.URL.Path, func(ctx1 context.Context) {
@@ -216,7 +215,7 @@ func (b *Bottom) handleHTTP(res ResponseWriter, req *http.Request, next http.Han
 				}
 				status = http.StatusInternalServerError
 			}
-			WriteResponse(res, req.Context(), status, resp)
+			WriteResponse(res, status, resp)
 		}
 
 		// Log the request
