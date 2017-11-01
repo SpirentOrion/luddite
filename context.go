@@ -125,10 +125,9 @@ func ContextRequestProgress(ctx context.Context) (reqProgress string) {
 }
 
 // SetContextRequestProgress sets the current HTTP request's progress trace in
-// a context.Context, if possible.
+// a context.Context.
 func SetContextRequestProgress(ctx context.Context, pkgName, funcName, stage string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		d.requestProgress = pkgName + "." + funcName + "-" + stage
 	}
-	return
 }

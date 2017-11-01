@@ -12,6 +12,7 @@ const (
 	HeaderAcceptEncoding       = "Accept-Encoding"
 	HeaderAuthorization        = "Authorization"
 	HeaderContentDisposition   = "Content-Disposition"
+	HeaderContentEncoding      = "Content-Encoding"
 	HeaderContentLength        = "Content-Length"
 	HeaderContentType          = "Content-Type"
 	HeaderETag                 = "ETag"
