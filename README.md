@@ -7,7 +7,7 @@ makes it easy to implement services that comply with the
 [Orion REST API Standards][apistds].
 
 [golang]: http://golang.org/
-[apistds]: https://github.com/SpirentOrion/orion-docs/blob/master/api/api-standards.md
+[apistds]: https://github.com/SpirentOrion/orion-api/blob/master/doc/api/api-standards.md
 
 To run the example service:
 
