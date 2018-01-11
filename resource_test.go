@@ -22,6 +22,14 @@ func TestNotImplementedResourceList(t *testing.T) {
 	}
 }
 
+func TestNotImplementedResourceCount(t *testing.T) {
+	ni := &NotImplementedResource{}
+	ret, _ := ni.Count(nil)
+	if ret != http.StatusNotImplemented {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
+	}
+}
+
 func TestNotImplementedResourceGet(t *testing.T) {
 	ni := &NotImplementedResource{}
 	ret, _ := ni.Get(nil, "")

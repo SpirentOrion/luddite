@@ -38,6 +38,9 @@ type Resource interface {
 	// List returns an HTTP status code and a slice of resources (or error).
 	List(req *http.Request) (int, interface{})
 
+	// Count returns an HTTP status code and a count of resources (or error).
+	Count(req *http.Request) (int, int)
+
 	// Get returns an HTTP status code and a single resource (or error).
 	Get(req *http.Request, id string) (int, interface{})
 
@@ -59,6 +62,16 @@ func AddListRoute(router *httprouter.Router, basePath string, r Resource) {
 		SetContextRequestProgress(req.Context(), "luddite", "Router.List", "begin")
 		if status, v := r.List(req); status > 0 {
 			SetContextRequestProgress(req.Context(), "luddite", "Router.List", "write")
+			WriteResponse(rw, status, v)
+		}
+	})
+}
+
+func AddCountRoute(router *httprouter.Router, basePath string, r Resource) {
+	router.GET(path.Join(basePath, "all", "count"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		SetContextRequestProgress(req.Context(), "luddite", "Router.Count", "begin")
+		if status, v := r.Count(req); status > 0 {
+			SetContextRequestProgress(req.Context(), "luddite", "Router.Count", "write")
 			WriteResponse(rw, status, v)
 		}
 	})
@@ -182,6 +195,10 @@ func (r *NotImplementedResource) Id(value interface{}) string {
 
 func (r *NotImplementedResource) List(req *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, nil
+}
+
+func (r *NotImplementedResource) Count(req *http.Request) (int, int) {
+	return http.StatusNotImplemented, 0
 }
 
 func (r *NotImplementedResource) Get(req *http.Request, id string) (int, interface{}) {
