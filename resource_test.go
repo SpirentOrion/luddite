@@ -69,3 +69,67 @@ func TestNotImplementedResourceAction(t *testing.T) {
 		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusNotImplemented, ret))
 	}
 }
+
+func TestMethodNotAllowedResourceId(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret := ni.Id(nil)
+	if ret != "" {
+		t.Error("failed to retrieve Id")
+	}
+}
+
+func TestMethodNotAllowedResourceList(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.List(nil)
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceCount(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Count(nil)
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceGet(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Get(nil, "")
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceCreate(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Create(nil, nil)
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceUpdate(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Update(nil, "", nil)
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceDelete(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Delete(nil, "")
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
+
+func TestMethodNotAllowedResourceAction(t *testing.T) {
+	ni := &MethodNotAllowedResource{}
+	ret, _ := ni.Action(nil, "", "")
+	if ret != http.StatusMethodNotAllowed {
+		t.Error(fmt.Sprintf("failed, expected %d but was %d", http.StatusMethodNotAllowed, ret))
+	}
+}
