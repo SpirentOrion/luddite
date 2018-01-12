@@ -198,7 +198,7 @@ func (r *NotImplementedResource) List(req *http.Request) (int, interface{}) {
 }
 
 func (r *NotImplementedResource) Count(req *http.Request) (int, interface{}) {
-	return http.StatusNotImplemented, 0
+	return http.StatusNotImplemented, nil
 }
 
 func (r *NotImplementedResource) Get(req *http.Request, id string) (int, interface{}) {
@@ -219,4 +219,44 @@ func (r *NotImplementedResource) Delete(req *http.Request, id string) (int, inte
 
 func (r *NotImplementedResource) Action(req *http.Request, id, action string) (int, interface{}) {
 	return http.StatusNotImplemented, nil
+}
+
+// MethodNotAllowedResource returns HTTP 405 NotImplemented for all HTTP methods.
+type MethodNotAllowedResource struct {
+}
+
+func (r *MethodNotAllowedResource) New() interface{} {
+	return &MethodNotAllowedResource{}
+}
+
+func (r *MethodNotAllowedResource) Id(value interface{}) string {
+	return ""
+}
+
+func (r *MethodNotAllowedResource) List(req *http.Request) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Count(req *http.Request) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Get(req *http.Request, id string) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Create(req *http.Request, value interface{}) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Update(req *http.Request, id string, value interface{}) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Delete(req *http.Request, id string) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
+}
+
+func (r *MethodNotAllowedResource) Action(req *http.Request, id, action string) (int, interface{}) {
+	return http.StatusMethodNotAllowed, nil
 }
