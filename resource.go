@@ -39,7 +39,7 @@ type Resource interface {
 	List(req *http.Request) (int, interface{})
 
 	// Count returns an HTTP status code and a count of resources (or error).
-	Count(req *http.Request) (int, int)
+	Count(req *http.Request) (int, interface{})
 
 	// Get returns an HTTP status code and a single resource (or error).
 	Get(req *http.Request, id string) (int, interface{})
@@ -197,7 +197,7 @@ func (r *NotImplementedResource) List(req *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, nil
 }
 
-func (r *NotImplementedResource) Count(req *http.Request) (int, int) {
+func (r *NotImplementedResource) Count(req *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, 0
 }
 
