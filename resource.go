@@ -67,16 +67,6 @@ func AddListRoute(router *httprouter.Router, basePath string, r Resource) {
 	})
 }
 
-func AddCountRoute(router *httprouter.Router, basePath string, r Resource) {
-	router.GET(path.Join(basePath, "all", "count"), func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		SetContextRequestProgress(req.Context(), "luddite", "Router.Count", "begin")
-		if status, v := r.Count(req); status > 0 {
-			SetContextRequestProgress(req.Context(), "luddite", "Router.Count", "write")
-			WriteResponse(rw, status, v)
-		}
-	})
-}
-
 func AddGetRoute(router *httprouter.Router, basePath string, withId bool, r Resource) {
 	var itemPath string
 	if withId {
@@ -85,9 +75,21 @@ func AddGetRoute(router *httprouter.Router, basePath string, withId bool, r Reso
 		itemPath = basePath
 	}
 	router.GET(itemPath, func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		var (
+			status int
+			v      interface{}
+		)
+
 		id := params.ByName("id")
 		SetContextRequestProgress(req.Context(), "luddite", "Router.Get", "begin")
-		if status, v := r.Get(req, id); status > 0 {
+
+		if id == "count" {
+			status, v = r.Count(req)
+		} else {
+			status, v = r.Get(req, id)
+		}
+
+		if status > 0 {
 			SetContextRequestProgress(req.Context(), "luddite", "Router.Get", "write")
 			WriteResponse(rw, status, v)
 		}
