@@ -165,6 +165,9 @@ func (s *service) AddCollectionResource(basePath string, r Resource) {
 	// GET /basePath
 	AddListRoute(s.router, basePath, r)
 
+	// GET /basePath/all/count
+	AddCountRoute(s.router, basePath, r)
+
 	// GET /basePath/{id}
 	AddGetRoute(s.router, basePath, true, r)
 

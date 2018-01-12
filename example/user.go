@@ -52,6 +52,10 @@ func (r *userResource) List(req *http.Request) (int, interface{}) {
 	return http.StatusOK, us
 }
 
+func (r *userResource) Count(req *http.Request) (int, interface{}) {
+	return http.StatusOK, len(r.users)
+}
+
 func (r *userResource) Get(req *http.Request, id string) (int, interface{}) {
 	r.RLock()
 	defer r.RUnlock()
