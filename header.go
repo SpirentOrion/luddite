@@ -11,6 +11,7 @@ const (
 	HeaderAccept               = "Accept"
 	HeaderAcceptEncoding       = "Accept-Encoding"
 	HeaderAuthorization        = "Authorization"
+	HeaderCacheControl         = "Cache-Control"
 	HeaderContentDisposition   = "Content-Disposition"
 	HeaderContentEncoding      = "Content-Encoding"
 	HeaderContentLength        = "Content-Length"
