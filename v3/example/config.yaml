@@ -1,0 +1,36 @@
+---
+service:
+  addr: :8000
+  cors:
+    enabled: true
+    allowed_origins: []
+    allowed_methods: []
+    allowed_headers: [Accept, Authorization, Content-Type, If-Match, If-None-Match, X-Spirent-Inhibit-Paging, X-Spirent-Resource-Nonce]
+    exposed_headers: [Content-Disposition, ETag, Location, X-Spirent-Api-Version, X-Spirent-Next-Link, X-Spirent-Resource-Nonce]
+    allow_credentials: true
+  debug:
+    stacks: true
+  log:
+    service_log_path:
+    service_log_level: debug
+    access_log_path:
+  metrics:
+    enabled: true
+    uri_path: /metrics
+  schema:
+    enabled: true
+    uri_path: /schema
+    file_path: /path/to/schema
+    root_redirect: true
+  trace:
+    enabled: true
+    tracer: json
+    params:
+      path: trace.json
+  transport:
+    tls: false
+    cert_file_path:
+    key_file_path:
+  version:
+    min: 1
+    max: 1

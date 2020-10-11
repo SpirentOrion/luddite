@@ -1,4 +1,3 @@
-/Godeps/_workspace
-/example/example
-/example/trace.*
-/**/*.test
+**/example/example
+**/example/trace.*
+**/*.test
