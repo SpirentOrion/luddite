@@ -1,4 +1,4 @@
-# Luddite Service Framework Package, Version 2
+# Luddite Service Framework Package, Version 3
 
 Luddite is a [golang][golang] package that provides a micro-framework for
 RESTful web services. It is built around extensible, pluggable middleware layers
@@ -10,8 +10,8 @@ services that comply with the [Orion REST API Standards][apistds].
 
 To run the example service:
 
-    $ make all
     $ cd example
+    $ go build .
     $ ./example -c config.yaml
 
 ## Request Handling
@@ -19,9 +19,9 @@ To run the example service:
 The basic request handling built into `luddite` combines CORS, tracing, logging,
 metrics, profiling, and recovery actions.
 
-Tracing generates a unique request id and optionally records traces to a file or
-persistent backend. The framework currently uses `v2` of the
-[trace](https://github.com/SpirentOrion/trace/tree/v2) package.
+Tracing generates a unique request id and optionally records trace spans to a
+file or pluggable backend. The framework currently uses the [OpenTracing]
+(https://github.com/opentracing/opentracing-go) package.
 
 Logging is based on [logrus](https://github.com/sirupsen/logrus). A service log
 is established for general use. An access log is maintained separately. Both use
@@ -40,17 +40,24 @@ stack traces in `500` responses.
 
 Currently, `luddite` registers two middleware handlers for each service:
 
-* Negotiation: Performs JSON (default) and XML content negotiation
+* Bottom: Handles CORS `OPTION` requests. Establishes request
+  [context][context], handles tracing, logging and recovery.
+
+* Negotiation: Performs JSON (default) and other content negotiation
   based on HTTP requests' `Accept` headers.
 
 * Version: Performs API version selection and enforces the service's min/max
   supported version constraints.  Makes the selected API version available
-  to resource handlers as part of the request [context][context].
+  to resource handlers as part of the request context.
+
+* Top: Dispatches requests using the service's global router or API
+  version-specific routers. The global router is given priority.
 
 [context]: http://blog.golang.org/context
 
 Implementations are free to register their own additional middleware handlers in
-addition to these two.
+addition to these four. Custom middleware handlers are inserted just below the
+top middleware.
 
 ## Resource Abstraction
 
