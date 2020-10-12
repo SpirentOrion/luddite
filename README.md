@@ -11,8 +11,8 @@ makes it easy to implement services that comply with the
 
 To run the example service:
 
-    $ make all
     $ cd example
+    $ go build .
     $ ./example -c config.yaml
 
 ## Resources
