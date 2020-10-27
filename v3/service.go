@@ -165,10 +165,22 @@ func (s *Service) Router(version int) (*httptreemux.ContextMux, error) {
 	return router, nil
 }
 
-// AddHandler adds a middleware handler to the service's middleware stack. All
-// handlers must be added before Run is called.
-func (s *Service) AddHandler(h Handler) {
+// AppendHandler appends a middleware handler to the service's middleware stack.
+// All handlers must be added before Run is called.
+func (s *Service) AppendHandler(h Handler) {
 	s.handlers = append(s.handlers, h)
+}
+
+// PrependHandler prepends a middleware handler to the service's middleware
+// stack. All handlers must be added before Run is called.
+func (s *Service) PrependHandler(h Handler) {
+	s.handlers = append([]Handler{h}, s.handlers...)
+}
+
+// AddHandler forwards to AppendHandler. It is provided for backward
+// compatibility.
+func (s *Service) AddHandler(h Handler) {
+	s.AppendHandler(h)
 }
 
 // AddResource is a convenience method that performs runtime type assertions on
