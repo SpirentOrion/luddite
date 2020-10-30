@@ -16,6 +16,7 @@ const (
 	ContentTypeCss               = "text/css"
 	ContentTypeCsv               = "text/csv"
 	ContentTypeGif               = "image/gif"
+	ContentTypeGrpc              = "application/grpc"
 	ContentTypeHtml              = "text/html"
 	ContentTypeJson              = "application/json"
 	ContentTypeMsgpack           = "application/msgpack"
