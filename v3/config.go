@@ -2,7 +2,9 @@ package luddite
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -171,15 +173,30 @@ func (config *ServiceConfig) Validate() error {
 	return nil
 }
 
-// ReadConfig reads a YAML config file from path. The file is strictly parsed
-// (any fields that are found in the data that do not have corresponding struct
-// members, or mapping keys that are duplicates, will result in an error) into
-// the struct pointed to by cfg.
-func ReadConfig(path string, cfg interface{}) error {
-	buf, err := ioutil.ReadFile(path)
+// NewConfig parses a YAML config file from an io.Reader. The file is strictly
+// parsed (any fields that are found in the data that do not have corresponding
+// struct members, or mapping keys that are duplicates, will result in an error)
+// into the struct pointed to by cfg.
+func NewConfig(r io.Reader, cfg interface{}) error {
+	buf, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 
 	return yaml.UnmarshalStrict(buf, cfg)
+}
+
+// ReadConfig reads a YAML config file from path. The file is strictly parsed
+// (any fields that are found in the data that do not have corresponding struct
+// members, or mapping keys that are duplicates, will result in an error) into
+// the struct pointed to by cfg.
+func ReadConfig(path string, cfg interface{}) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	err = NewConfig(f, cfg)
+	_ = f.Close()
+	return err
 }
