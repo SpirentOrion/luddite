@@ -3,7 +3,6 @@ package luddite
 import (
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -19,6 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 // Service implements a standalone RESTful web service.
@@ -376,27 +377,34 @@ func (s *Service) run() error {
 
 	// Serve HTTP or HTTPS, depending on config. Use stoppable listener so
 	// we can exit gracefully if signaled to do so.
-	var (
-		l   net.Listener
-		err error
-	)
 	if config.Transport.TLS {
 		s.defaultLogger.Debugf("HTTPS listening on %s", config.Addr)
-		l, err = NewStoppableTLSListener(config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
+		l, err := NewStoppableTLSListener(config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
+		if err != nil {
+			return err
+		}
+
+		if err = http.Serve(l, h); err != nil {
+			if _, ok := err.(*ListenerStoppedError); ok {
+				err = nil
+			}
+		}
 	} else {
 		s.defaultLogger.Debugf("HTTP listening on %s", config.Addr)
-		l, err = NewStoppableTCPListener(config.Addr, true)
-	}
-	if err != nil {
-		return err
-	}
+		l, err := NewStoppableTCPListener(config.Addr, true)
+		if err != nil {
+			return err
+		}
 
-	if err = http.Serve(l, h); err != nil {
-		if _, ok := err.(*ListenerStoppedError); ok {
-			err = nil
+		h2s := new(http2.Server)
+		if err = http.Serve(l, h2c.NewHandler(h, h2s)); err != nil {
+			if _, ok := err.(*ListenerStoppedError); ok {
+				err = nil
+			}
 		}
 	}
-	return err
+
+	return nil
 }
 
 func openLogFile(logger *log.Logger, logPath string) {
