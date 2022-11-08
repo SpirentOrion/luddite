@@ -3,6 +3,7 @@ package luddite
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -40,7 +41,17 @@ type Service struct {
 // NewService creates a new Service instance based on the given config.
 // Middleware handlers and resources should be added before the service is run.
 // The service may be run one time.
-func NewService(config *ServiceConfig) (*Service, error) {
+func NewService(config *ServiceConfig, configExt ...*ServiceConfigExt) (*Service, error) {
+	var serviceLogWriter, accessLogWriter io.Writer
+	switch len(configExt) {
+	case 0:
+	case 1:
+		serviceLogWriter = configExt[0].ServiceLogWriter
+		accessLogWriter = configExt[0].AccessLogWriter
+	default:
+		return nil, fmt.Errorf("Only single instance of ServiceConfigExt allowed atmost")
+	}
+
 	// Normalize and validate config
 	config.Normalize()
 	if err := config.Validate(); err != nil {
@@ -61,7 +72,11 @@ func NewService(config *ServiceConfig) (*Service, error) {
 	// Configure logging
 	if config.Log.ServiceLogPath != "" {
 		// Service log to file
-		openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
+		if serviceLogWriter != nil {
+			s.defaultLogger.Out = serviceLogWriter
+		} else {
+			openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
+		}
 	} else {
 		// Service log to stdout
 		s.defaultLogger.Out = os.Stdout
@@ -86,7 +101,11 @@ func NewService(config *ServiceConfig) (*Service, error) {
 			Formatter: new(log.JSONFormatter),
 			Level:     log.InfoLevel,
 		}
-		openLogFile(s.accessLogger, config.Log.AccessLogPath)
+		if accessLogWriter != nil {
+			s.accessLogger.Out = accessLogWriter
+		} else {
+			openLogFile(s.accessLogger, config.Log.AccessLogPath)
+		}
 	} else if config.Log.ServiceLogPath != "" {
 		// Access log to stdout
 		s.accessLogger = &log.Logger{
