@@ -1,6 +1,6 @@
 module github.com/SpirentOrion/luddite/v3
 
-go 1.14
+go 1.18
 
 require (
 	github.com/DataDog/datadog-go v4.0.1+incompatible // indirect
