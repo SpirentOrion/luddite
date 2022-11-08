@@ -171,6 +171,11 @@ func (s *Service) Logger() *log.Logger {
 	return s.defaultLogger
 }
 
+// Logger returns the service's access logger instance.
+func (s *Service) AccessLogger() *log.Logger {
+	return s.accessLogger
+}
+
 // Tracer returns the service's opentracing.Tracer instance.
 func (s *Service) Tracer() opentracing.Tracer {
 	return s.tracer
