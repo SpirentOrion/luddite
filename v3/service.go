@@ -70,13 +70,11 @@ func NewService(config *ServiceConfig, configExt ...*ServiceConfigExt) (*Service
 	}
 
 	// Configure logging
-	if config.Log.ServiceLogPath != "" {
+	if serviceLogWriter != nil {
+		s.defaultLogger.Out = serviceLogWriter
+	} else if config.Log.ServiceLogPath != "" {
 		// Service log to file
-		if serviceLogWriter != nil {
-			s.defaultLogger.Out = serviceLogWriter
-		} else {
-			openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
-		}
+		openLogFile(s.defaultLogger, config.Log.ServiceLogPath)
 	} else {
 		// Service log to stdout
 		s.defaultLogger.Out = os.Stdout
@@ -95,24 +93,18 @@ func NewService(config *ServiceConfig, configExt ...*ServiceConfigExt) (*Service
 		s.defaultLogger.SetLevel(log.ErrorLevel)
 	}
 
-	if config.Log.AccessLogPath != "" {
+	s.accessLogger = &log.Logger{
+		Formatter: new(log.JSONFormatter),
+		Level:     log.InfoLevel,
+	}
+	if accessLogWriter != nil {
+		s.accessLogger.Out = accessLogWriter
+	} else if config.Log.AccessLogPath != "" {
 		// Access log to file
-		s.accessLogger = &log.Logger{
-			Formatter: new(log.JSONFormatter),
-			Level:     log.InfoLevel,
-		}
-		if accessLogWriter != nil {
-			s.accessLogger.Out = accessLogWriter
-		} else {
-			openLogFile(s.accessLogger, config.Log.AccessLogPath)
-		}
+		openLogFile(s.accessLogger, config.Log.AccessLogPath)
 	} else if config.Log.ServiceLogPath != "" {
 		// Access log to stdout
-		s.accessLogger = &log.Logger{
-			Formatter: new(log.JSONFormatter),
-			Level:     log.InfoLevel,
-			Out:       os.Stdout,
-		}
+		s.accessLogger.Out = os.Stdout
 	} else {
 		// Both service log and access log to stdout (sharing a logger)
 		s.accessLogger = s.defaultLogger
