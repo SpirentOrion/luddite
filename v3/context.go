@@ -21,6 +21,7 @@ type handlerDetails struct {
 	requestProgress string
 	apiVersion      int
 	callerId        string
+	skipInfoLog     bool
 	details         map[interface{}]interface{}
 }
 
@@ -32,6 +33,7 @@ func (d *handlerDetails) init(s *Service, rw ResponseWriter, request *http.Reque
 	d.requestProgress = requestProgress
 	d.apiVersion = 0
 	d.callerId = ""
+	d.skipInfoLog = false
 	d.details = nil
 }
 
@@ -141,6 +143,15 @@ func ContextApiVersion(ctx context.Context) (apiVersion int) {
 func SetContextCallerId(ctx context.Context, callerId string) {
 	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
 		d.callerId = callerId
+	}
+}
+
+// SetContextSkipInfoLog sets a request-specific flag in a context.Context. If
+// set, the request's access log entry and trace data will be skipped at
+// InfoLevel if request was successful. Errors will always be logged.
+func SetContextSkipInfoLog(ctx context.Context) {
+	if d, ok := ctx.Value(contextHandlerDetailsKey).(*handlerDetails); ok {
+		d.skipInfoLog = true
 	}
 }
 

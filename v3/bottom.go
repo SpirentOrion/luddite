@@ -111,53 +111,56 @@ func (b *bottomHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, nex
 			}
 		}
 
-		// Log the request
-		fields := log.Fields{
-			"client_addr":   req.RemoteAddr,
-			"forwarded_for": req.Header.Get(HeaderForwardedFor),
-			"proto":         req.Proto,
-			"method":        req.Method,
-			"uri":           req.RequestURI,
-			"status":        status,
-			"size":          res.Size(),
-			"user_agent":    req.UserAgent(),
-			"request_id":    requestId,
-			"api_version":   d.apiVersion,
-			"latency":       fmt.Sprintf("%.6f", latency.Seconds()),
-		}
-		sessionId := req.Header.Get(HeaderSessionId)
-		if sessionId != "" {
-			fields["session_id"] = sessionId
-		}
-		callerId := d.callerId
-		if callerId != "" {
-			fields["caller_id"] = callerId
-		}
-		entry := b.accessLogger.WithFields(fields)
-		if status/100 != 5 {
-			entry.Info()
-		} else {
-			entry.Error()
-		}
+		if !d.skipInfoLog || (status >= 400) || (b.accessLogger.Level != log.InfoLevel) {
 
-		// Decorate trace span
-		if !b.tracerKind.IsNoop() {
-			serverSpan.SetTag("luddite.progress", ContextRequestProgress(ctx))
-			serverSpan.SetTag("http.method", req.Method)
-			serverSpan.SetTag("http.url", req.URL.String())
-			serverSpan.SetTag("http.status_code", res.Status())
-			serverSpan.SetTag("http.response_size", res.Size())
-			serverSpan.SetTag("http.request_id", requestId)
-			serverSpan.SetTag("api_version", d.apiVersion)
+			// Log the request
+			fields := log.Fields{
+				"client_addr":   req.RemoteAddr,
+				"forwarded_for": req.Header.Get(HeaderForwardedFor),
+				"proto":         req.Proto,
+				"method":        req.Method,
+				"uri":           req.RequestURI,
+				"status":        status,
+				"size":          res.Size(),
+				"user_agent":    req.UserAgent(),
+				"request_id":    requestId,
+				"api_version":   d.apiVersion,
+				"latency":       fmt.Sprintf("%.6f", latency.Seconds()),
+			}
+			sessionId := req.Header.Get(HeaderSessionId)
 			if sessionId != "" {
-				serverSpan.SetTag("session_id", sessionId)
+				fields["session_id"] = sessionId
 			}
+			callerId := d.callerId
 			if callerId != "" {
-				serverSpan.SetTag("caller_id", callerId)
+				fields["caller_id"] = callerId
 			}
-			if rcv != nil {
-				serverSpan.SetTag("panic", rcv)
-				serverSpan.SetTag("stack", stack)
+			entry := b.accessLogger.WithFields(fields)
+			if status/100 != 5 {
+				entry.Info()
+			} else {
+				entry.Error()
+			}
+
+			// Decorate trace span
+			if !b.tracerKind.IsNoop() {
+				serverSpan.SetTag("luddite.progress", ContextRequestProgress(ctx))
+				serverSpan.SetTag("http.method", req.Method)
+				serverSpan.SetTag("http.url", req.URL.String())
+				serverSpan.SetTag("http.status_code", res.Status())
+				serverSpan.SetTag("http.response_size", res.Size())
+				serverSpan.SetTag("http.request_id", requestId)
+				serverSpan.SetTag("api_version", d.apiVersion)
+				if sessionId != "" {
+					serverSpan.SetTag("session_id", sessionId)
+				}
+				if callerId != "" {
+					serverSpan.SetTag("caller_id", callerId)
+				}
+				if rcv != nil {
+					serverSpan.SetTag("panic", rcv)
+					serverSpan.SetTag("stack", stack)
+				}
 			}
 		}
 	}()
