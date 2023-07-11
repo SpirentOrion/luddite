@@ -6,16 +6,21 @@ import (
 
 type notImplementedResource struct{}
 
+type notImplementedType struct {
+	Id string
+}
+
 func NewNotImplementedResource() *notImplementedResource {
 	return &notImplementedResource{}
 }
 
 func (r *notImplementedResource) New() interface{} {
-	return &struct{}{}
+	return new(notImplementedType)
 }
 
 func (r *notImplementedResource) Id(value interface{}) string {
-	return ""
+	v := value.(*notImplementedType)
+	return v.Id
 }
 
 func (r *notImplementedResource) List(req *http.Request) (int, interface{}) {
