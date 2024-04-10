@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -85,4 +86,25 @@ func RequestQueryCursor(r *http.Request) string {
 // the http.Request.
 func RequestResourceNonce(r *http.Request) string {
 	return r.Header.Get(HeaderSpirentResourceNonce)
+}
+
+// SetHeader sets the header key with sanitized value to a http response writer
+func SetHeader(rw http.ResponseWriter, key string, value string) {
+	// remove /r/n(CRLF) to avoid http response splitting
+	sanitizedString := sanitizeString(value)
+	rw.Header().Set(key, sanitizedString)
+}
+
+// AddHeader adds the header key with sanitized value to a http response writer
+func AddHeader(rw http.ResponseWriter, key string, value string) {
+	// remove /r/n(CRLF) to avoid http response splitting
+	sanitizedString := sanitizeString(value)
+	rw.Header().Add(key, sanitizedString)
+}
+
+// sanitizeString removes "/r/n"(CRLF) to avoid http response splitting
+func sanitizeString(value string) (sanitizedString string) {
+	sanitizedString = strings.ReplaceAll(value, "\r", "")
+	sanitizedString = strings.ReplaceAll(sanitizedString, "\n", "")
+	return
 }

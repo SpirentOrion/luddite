@@ -44,7 +44,7 @@ func (h *schemaHandler) ServeHTTP(rw http.ResponseWriter, req0 *http.Request) {
 
 	switch strings.ToLower(path.Ext(filepath)) {
 	case ".yaml", ".yml":
-		rw.Header().Set(HeaderContentType, ContentTypeOctetStream)
+		SetHeader(rw, HeaderContentType, ContentTypeOctetStream)
 	default:
 		rw.Header().Del(HeaderContentType)
 	}

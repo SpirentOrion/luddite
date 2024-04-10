@@ -149,12 +149,12 @@ func WriteResponse(rw http.ResponseWriter, status int, v interface{}) (err error
 			case []byte:
 				b = v.([]byte)
 				if ct == "" {
-					rw.Header().Set(HeaderContentType, ContentTypeOctetStream)
+					SetHeader(rw, HeaderContentType, ContentTypeOctetStream)
 				}
 			case string:
 				b = []byte(v.(string))
 				if ct == "" {
-					rw.Header().Set(HeaderContentType, ContentTypePlain)
+					SetHeader(rw, HeaderContentType, ContentTypePlain)
 				}
 			default:
 				rw.WriteHeader(http.StatusNotAcceptable)

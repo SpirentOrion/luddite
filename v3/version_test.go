@@ -12,7 +12,7 @@ func TestNonPositiveApiVersionConstraint(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Add(HeaderSpirentApiVersion, "0")
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	v := &versionHandler{
 		minVersion: 2,
@@ -28,7 +28,7 @@ func TestMinApiVersionConstraint(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Add(HeaderSpirentApiVersion, "1")
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	v := &versionHandler{
 		minVersion: 2,
@@ -44,7 +44,7 @@ func TestMaxApiVersionConstraint(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Add(HeaderSpirentApiVersion, "43")
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	v := &versionHandler{
 		minVersion: 2,
@@ -61,7 +61,7 @@ func TestApiVersionContext(t *testing.T) {
 	req.Header.Add(HeaderSpirentApiVersion, "1")
 	req = req.WithContext(withHandlerDetails(req.Context(), &handlerDetails{}))
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	v := &versionHandler{
 		minVersion: 1,

@@ -40,7 +40,7 @@ func (n *negotiatorHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request,
 	// the resource handler doesn't deal with it, then we can expect a 406
 	// from WriteResponse.
 	if format, _ := negotiation.NegotiateAccept(accept, acceptedContentTypes); format != nil {
-		rw.Header().Set(HeaderContentType, format.Value)
+		SetHeader(rw, HeaderContentType, format.Value)
 	}
 
 	// If the X-Spirent-Inhibit-Response header is set and true-ish, then
@@ -49,7 +49,7 @@ func (n *negotiatorHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request,
 	// makes the behavior obvious to clients (i.e. response header shows
 	// intention beyond the 204 status).
 	if inhibitResp, _ := strconv.ParseBool(req.Header.Get(HeaderSpirentInhibitResponse)); inhibitResp {
-		rw.Header().Set(HeaderSpirentInhibitResponse, "1")
+		SetHeader(rw, HeaderSpirentInhibitResponse, "1")
 	}
 
 	next(rw, req)
