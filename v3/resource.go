@@ -105,7 +105,7 @@ func AddCreateCollectionRoute(router *httptreemux.ContextMux, basePath string, r
 					Host:   req.URL.Host,
 					Path:   path.Join(req.URL.Path, r.Id(v1)),
 				}
-				rw.Header().Add(HeaderLocation, url.String())
+				AddHeader(rw, HeaderLocation, url.String())
 			}
 			SetContextRequestProgress(ctx, "luddite.CreateCollectionRoute.write")
 			_ = WriteResponse(rw, status, v1)

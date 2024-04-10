@@ -64,7 +64,7 @@ func (b *bottomHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, nex
 	defer serverSpan.Finish()
 
 	requestId := strconv.FormatUint(b.tracerKind.TraceId(serverSpan), 10)
-	rw.Header().Set(HeaderRequestId, requestId)
+	SetHeader(rw, HeaderRequestId, requestId)
 
 	// Create a new response writer
 	res = responseWriterPool.Get().(*responseWriter)

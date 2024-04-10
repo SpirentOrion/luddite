@@ -28,7 +28,7 @@ func TestSchemaHandlerDefaultContentType(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = req.WithContext(ctx)
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	s := newSchemaHandler(fakeFS)
 	s.ServeHTTP(rw, req)
@@ -53,7 +53,7 @@ func TestSchemaHandlerOctetStreamContentType(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = req.WithContext(ctx)
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	s := newSchemaHandler(fakeFS)
 	s.ServeHTTP(rw, req)
@@ -74,7 +74,7 @@ func TestSchemaHandlerGivenInvalidVersionStringLength(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = req.WithContext(ctx)
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	s := newSchemaHandler(nil)
 	s.ServeHTTP(rw, req)
@@ -91,7 +91,7 @@ func TestSchemaHandlerGivenInvalidVersionValue(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = req.WithContext(ctx)
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	s := newSchemaHandler(nil)
 	s.ServeHTTP(rw, req)
@@ -108,7 +108,7 @@ func TestSchemaHandlerGivenInvalidVersionNumber(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = req.WithContext(ctx)
 	rw := httptest.NewRecorder()
-	rw.Header().Set(HeaderContentType, ContentTypeJson)
+	SetHeader(rw, HeaderContentType, ContentTypeJson)
 
 	s := newSchemaHandler(nil)
 	s.ServeHTTP(rw, req)

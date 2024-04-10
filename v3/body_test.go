@@ -68,7 +68,7 @@ func TestWriteJson(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	rw.Header().Add(HeaderContentType, ContentTypeJson)
+	AddHeader(rw, HeaderContentType, ContentTypeJson)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)
@@ -123,7 +123,7 @@ func TestWriteXml(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	rw.Header().Add(HeaderContentType, ContentTypeXml)
+	AddHeader(rw, HeaderContentType, ContentTypeXml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)
@@ -145,7 +145,7 @@ func TestWriteXml(t *testing.T) {
 func TestWriteHtml(t *testing.T) {
 	// Write []byte
 	rw := httptest.NewRecorder()
-	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+	AddHeader(rw, HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, []byte(sampleData)); err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestWriteHtml(t *testing.T) {
 
 	// Write string
 	rw = httptest.NewRecorder()
-	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+	AddHeader(rw, HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, sampleData); err != nil {
 		t.Fatal(err)
@@ -193,7 +193,7 @@ func TestWriteHtml(t *testing.T) {
 	}
 
 	rw = httptest.NewRecorder()
-	rw.Header().Add(HeaderContentType, ContentTypeHtml)
+	AddHeader(rw, HeaderContentType, ContentTypeHtml)
 
 	if err := WriteResponse(rw, http.StatusOK, s); err != nil {
 		t.Fatal(err)

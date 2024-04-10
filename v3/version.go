@@ -38,7 +38,7 @@ func (v *versionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, ne
 
 	// Add the requested API version to response headers (useful for clients
 	// when a default version was negotiated)
-	rw.Header().Add(HeaderSpirentApiVersion, strconv.Itoa(version))
+	AddHeader(rw, HeaderSpirentApiVersion, strconv.Itoa(version))
 
 	// Add the requested API version to handler context so that downstream
 	// handlers can dispatch correctly
