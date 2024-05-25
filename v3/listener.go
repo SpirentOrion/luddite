@@ -89,3 +89,17 @@ func NewStoppableTLSListener(addr string, keepalives bool, certFile string, keyF
 	}
 	return tls.NewListener(stl, tlsConfig), nil
 }
+
+func NewStoppableTLSGetCertificateListener(addr string, keepalives bool,
+	getCertificateHandler func(*tls.ClientHelloInfo) (*tls.Certificate, error)) (net.Listener, error) {
+	tlsConfig := &tls.Config{
+		NextProtos:     []string{"http/1.1", "h2"},
+		GetCertificate: getCertificateHandler,
+	}
+
+	stl, err := NewStoppableTCPListener(addr, keepalives)
+	if err != nil {
+		return nil, err
+	}
+	return tls.NewListener(stl, tlsConfig), nil
+}

@@ -1,9 +1,11 @@
 package luddite
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -25,17 +27,18 @@ import (
 
 // Service implements a standalone RESTful web service.
 type Service struct {
-	config        *ServiceConfig
-	globalRouter  *httptreemux.ContextMux
-	apiRouters    map[int]*httptreemux.ContextMux
-	defaultLogger *log.Logger
-	accessLogger  *log.Logger
-	tracerKind    TracerKind
-	tracer        opentracing.Tracer
-	schemas       http.FileSystem
-	cors          *cors.Cors
-	handlers      []Handler
-	once          sync.Once
+	config                *ServiceConfig
+	globalRouter          *httptreemux.ContextMux
+	apiRouters            map[int]*httptreemux.ContextMux
+	defaultLogger         *log.Logger
+	accessLogger          *log.Logger
+	tracerKind            TracerKind
+	tracer                opentracing.Tracer
+	schemas               http.FileSystem
+	cors                  *cors.Cors
+	handlers              []Handler
+	once                  sync.Once
+	getCertificateHandler func(*tls.ClientHelloInfo) (*tls.Certificate, error)
 }
 
 // NewService creates a new Service instance based on the given config.
@@ -362,6 +365,13 @@ func (s *Service) addSingletonRoutes(router *httptreemux.ContextMux, basePath st
 	}
 }
 
+// Set the tls.Config.GetCertificate handler function.
+// The GetCertificate handler may be used to support reloading TLS certificates when the files have changed.
+// SetGetCertificateHandler must be set called before the service is Run.
+func (s *Service) SetGetCertificateHandler(handler func(*tls.ClientHelloInfo) (*tls.Certificate, error)) {
+	s.getCertificateHandler = handler
+}
+
 func (s *Service) run() error {
 	config := s.config
 
@@ -394,10 +404,20 @@ func (s *Service) run() error {
 	// Serve HTTP or HTTPS, depending on config. Use stoppable listener so
 	// we can exit gracefully if signaled to do so.
 	if config.Transport.TLS {
+		var err error
+		var l net.Listener
 		s.defaultLogger.Debugf("HTTPS listening on %s", config.Addr)
-		l, err := NewStoppableTLSListener(config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
-		if err != nil {
-			return err
+		if s.getCertificateHandler != nil {
+			l, err = NewStoppableTLSGetCertificateListener(config.Addr, true, s.getCertificateHandler)
+			if err != nil {
+				return err
+			}
+		} else {
+			l, err = NewStoppableTLSListener(
+				config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
+			if err != nil {
+				return err
+			}
 		}
 
 		if err = http.Serve(l, h); err != nil {
