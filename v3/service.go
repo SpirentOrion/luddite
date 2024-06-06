@@ -14,7 +14,7 @@ import (
 	"syscall"
 
 	"github.com/dimfeld/httptreemux"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -49,7 +49,7 @@ func NewService(config *ServiceConfig, configExt ...*ServiceConfigExt) (*Service
 		serviceLogWriter = configExt[0].ServiceLogWriter
 		accessLogWriter = configExt[0].AccessLogWriter
 	default:
-		return nil, fmt.Errorf("Only single instance of ServiceConfigExt allowed atmost")
+		return nil, fmt.Errorf("only a single instance of ServiceConfigExt allowed")
 	}
 
 	// Normalize and validate config
@@ -163,7 +163,7 @@ func (s *Service) Logger() *log.Logger {
 	return s.defaultLogger
 }
 
-// Logger returns the service's access logger instance.
+// AccessLogger returns the service's access logger instance.
 func (s *Service) AccessLogger() *log.Logger {
 	return s.accessLogger
 }
@@ -391,17 +391,25 @@ func (s *Service) run() error {
 		h = middleware.ServeHTTP
 	}
 
-	// Serve HTTP or HTTPS, depending on config. Use stoppable listener so
+	// Serve HTTP or HTTPS, depending on config. Use stoppable listener, so
 	// we can exit gracefully if signaled to do so.
 	if config.Transport.TLS {
+		cl, err := NewCertificateLoader(config, s.Logger())
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = cl.Close()
+		}()
 		s.defaultLogger.Debugf("HTTPS listening on %s", config.Addr)
-		l, err := NewStoppableTLSListener(config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
+		l, err := NewStoppableTLSListener(config.Addr, true, cl.GetCertificate)
 		if err != nil {
 			return err
 		}
 
 		if err = http.Serve(l, h); err != nil {
-			if _, ok := err.(*ListenerStoppedError); ok {
+			var listenerStoppedError *ListenerStoppedError
+			if errors.As(err, &listenerStoppedError) {
 				err = nil
 			}
 		}
@@ -414,7 +422,8 @@ func (s *Service) run() error {
 
 		h2s := new(http2.Server)
 		if err = http.Serve(l, h2c.NewHandler(h, h2s)); err != nil {
-			if _, ok := err.(*ListenerStoppedError); ok {
+			var listenerStoppedError *ListenerStoppedError
+			if errors.As(err, &listenerStoppedError) {
 				err = nil
 			}
 		}

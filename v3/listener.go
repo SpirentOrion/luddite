@@ -2,6 +2,7 @@ package luddite
 
 import (
 	"crypto/tls"
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -43,7 +44,8 @@ func (sl *StoppableTCPListener) Accept() (net.Conn, error) {
 
 		if err != nil {
 			// If this is a timeout, then continue to wait for new connections
-			if e, ok := err.(net.Error); ok && e.Timeout() && e.Temporary() {
+			var e net.Error
+			if errors.As(err, &e) && e.Timeout() && e.Temporary() {
 				continue
 			}
 			return nil, err
@@ -72,15 +74,10 @@ func NewStoppableTCPListener(addr string, keepalives bool) (net.Listener, error)
 	return sl, nil
 }
 
-func NewStoppableTLSListener(addr string, keepalives bool, certFile string, keyFile string) (net.Listener, error) {
+func NewStoppableTLSListener(addr string, keepalives bool, getCertificate func(hi *tls.ClientHelloInfo) (*tls.Certificate, error)) (net.Listener, error) {
 	tlsConfig := &tls.Config{
-		NextProtos:   []string{"http/1.1", "h2"},
-		Certificates: make([]tls.Certificate, 1),
-	}
-
-	var err error
-	if tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile); err != nil {
-		return nil, err
+		NextProtos:     []string{"http/1.1", "h2"},
+		GetCertificate: getCertificate,
 	}
 
 	stl, err := NewStoppableTCPListener(addr, keepalives)

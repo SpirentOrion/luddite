@@ -3,7 +3,6 @@ package luddite
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -129,6 +128,9 @@ type ServiceConfig struct {
 
 		// KeyFilePath sets the path to the server's key file.
 		KeyFilePath string `yaml:"key_file_path"`
+
+		// ReloadOnUpdate monitor CertFilePath and KeyFilePath for changes, reload automatically
+		ReloadOnUpdate bool `yaml:"reload_on_update"`
 	}
 
 	Version struct {
@@ -178,7 +180,7 @@ func (config *ServiceConfig) Validate() error {
 // struct members, or mapping keys that are duplicates, will result in an error)
 // into the struct pointed to by cfg.
 func NewConfig(r io.Reader, cfg interface{}) error {
-	buf, err := ioutil.ReadAll(r)
+	buf, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}
