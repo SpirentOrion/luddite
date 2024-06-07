@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"path"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -20,7 +21,7 @@ type CertificateLoader interface {
 }
 
 type certLoader struct {
-	cert         *tls.Certificate
+	cert         atomic.Pointer[tls.Certificate]
 	certFilePath string
 	keyFilePath  string
 	watcher      *fsnotify.Watcher
@@ -33,7 +34,7 @@ func NewCertificateLoader(config *ServiceConfig, logger *log.Logger) (Certificat
 		keyFilePath:  config.Transport.KeyFilePath,
 		log:          logger,
 	}
-	if err := cl.loadCertificate(); err != nil {
+	if err := cl.storeCertificate(); err != nil {
 		return nil, err
 	}
 	if config.Transport.ReloadOnUpdate {
@@ -44,18 +45,18 @@ func NewCertificateLoader(config *ServiceConfig, logger *log.Logger) (Certificat
 	return cl, nil
 }
 
-func (l *certLoader) loadCertificate() error {
-	l.log.Debugf("loading cert: '%s', key: '%s'", l.certFilePath, l.keyFilePath)
+func (l *certLoader) storeCertificate() error {
+	l.log.Debugf("storing cert: '%s', key: '%s'", l.certFilePath, l.keyFilePath)
 	cert, err := tls.LoadX509KeyPair(l.certFilePath, l.keyFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to load certificate '%s': '%s'", l.certFilePath, err)
 	}
-	l.cert = &cert
+	l.cert.Store(&cert)
 	return nil
 }
 
 func (l *certLoader) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	return l.cert, nil
+	return l.cert.Load(), nil
 }
 
 func (l *certLoader) Close() error {
@@ -133,7 +134,7 @@ func (l *certLoader) handleFsEvents(event fsnotify.Event, files []string) bool {
 func (l *certLoader) setDeDupTimer(timer *time.Timer) *time.Timer {
 	if timer == nil {
 		timer = time.AfterFunc(time.Hour, func() {
-			if err := l.loadCertificate(); err != nil {
+			if err := l.storeCertificate(); err != nil {
 				l.log.WithError(err).Error("error reloading certificate")
 			}
 		})
