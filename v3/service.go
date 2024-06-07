@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -363,73 +364,64 @@ func (s *Service) addSingletonRoutes(router *httptreemux.ContextMux, basePath st
 }
 
 func (s *Service) run() error {
-	config := s.config
-
 	// Add optional HTTP handlers
-	if config.Metrics.Enabled {
+	if s.config.Metrics.Enabled {
 		s.addMetricsRoute()
 	}
-	if config.Profiler.Enabled {
+	if s.config.Profiler.Enabled {
 		s.addProfilerRoutes()
 	}
-	if config.Schema.Enabled {
+	if s.config.Schema.Enabled {
 		s.addSchemaRoutes()
 	}
+
+	var (
+		listener          net.Listener
+		httpHandler       http.Handler
+		certificateLoader CertificateLoader
+		err               error
+	)
 
 	// Add "top" as the final middleware handler
 	s.AddHandler(&topHandler{
 		globalRouter: s.globalRouter,
 		apiRouters:   s.apiRouters,
 	})
-	middleware := buildMiddleware(s.handlers)
+	httpHandler = buildMiddleware(s.handlers)
 
 	// If metrics are enabled let Prometheus have a look at the request first
-	var h http.HandlerFunc
-	if config.Metrics.Enabled {
-		h = instrumentHTTPHandler(middleware).ServeHTTP
-	} else {
-		h = middleware.ServeHTTP
+	if s.config.Metrics.Enabled {
+		httpHandler = instrumentHTTPHandler(httpHandler)
 	}
 
 	// Serve HTTP or HTTPS, depending on config. Use stoppable listener, so
 	// we can exit gracefully if signaled to do so.
-	if config.Transport.TLS {
-		cl, err := NewCertificateLoader(config, s.Logger())
-		if err != nil {
+	if s.config.Transport.TLS {
+		if certificateLoader, err = NewCertificateLoader(s.config, s.Logger()); err != nil {
 			return err
 		}
 		defer func() {
-			_ = cl.Close()
+			_ = certificateLoader.Close()
 		}()
-		s.defaultLogger.Debugf("HTTPS listening on %s", config.Addr)
-		l, err := NewStoppableTLSListener(config.Addr, true, cl.GetCertificate)
-		if err != nil {
+		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
+		if listener, err = NewStoppableTLSListener(s.config.Addr, true, certificateLoader.GetCertificate); err != nil {
 			return err
-		}
-
-		if err = http.Serve(l, h); err != nil {
-			var listenerStoppedError *ListenerStoppedError
-			if errors.As(err, &listenerStoppedError) {
-				err = nil
-			}
 		}
 	} else {
-		s.defaultLogger.Debugf("HTTP listening on %s", config.Addr)
-		l, err := NewStoppableTCPListener(config.Addr, true)
-		if err != nil {
+		s.defaultLogger.Debugf("HTTP listening on %s", s.config.Addr)
+		if listener, err = NewStoppableTCPListener(s.config.Addr, true); err != nil {
 			return err
 		}
-
-		h2s := new(http2.Server)
-		if err = http.Serve(l, h2c.NewHandler(h, h2s)); err != nil {
-			var listenerStoppedError *ListenerStoppedError
-			if errors.As(err, &listenerStoppedError) {
-				err = nil
-			}
-		}
+		httpHandler = h2c.NewHandler(httpHandler, new(http2.Server))
 	}
 
-	return nil
+	if err = http.Serve(listener, httpHandler); err != nil {
+		var lse *ListenerStoppedError
+		if errors.As(err, &lse) {
+			err = nil
+		}
+	}
+	return err
 }
 
 func openLogFile(logger *log.Logger, logPath string) {
