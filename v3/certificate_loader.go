@@ -86,14 +86,13 @@ func (l *certLoader) watch() error {
 		}
 		l.log.Debugf("key directory '%s' added to watcher", keyFileDir)
 	}
-	certFile := path.Base(l.certFilePath)
-	keyFile := path.Base(l.keyFilePath)
-	go l.fsWatch(l.watcher, []string{certFile, keyFile})
+
+	go l.fsWatch(l.watcher, l.certFilePath, l.keyFilePath)
 
 	return nil
 }
 
-func (l *certLoader) fsWatch(watcher *fsnotify.Watcher, filenames []string) {
+func (l *certLoader) fsWatch(watcher *fsnotify.Watcher, filenames ...string) {
 	var timer *time.Timer
 	defer func() {
 		if timer != nil {
@@ -106,9 +105,13 @@ func (l *certLoader) fsWatch(watcher *fsnotify.Watcher, filenames []string) {
 			if !ok {
 				return
 			}
-			if updated := l.handleFsEvents(event, filenames); updated {
+			if updated := l.handleFsEvent(event, filenames...); updated {
 				// N.B. process the event after a delay to avoid duplicates when both files are written
-				timer = l.setDeDupTimer(timer)
+				timer = setDeDupTimer(timer, func() {
+					if err := l.storeCertificate(); err != nil {
+						l.log.WithError(err).Error("error reloading certificate")
+					}
+				})
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
@@ -119,7 +122,7 @@ func (l *certLoader) fsWatch(watcher *fsnotify.Watcher, filenames []string) {
 	}
 }
 
-func (l *certLoader) handleFsEvents(event fsnotify.Event, files []string) bool {
+func (l *certLoader) handleFsEvent(event fsnotify.Event, files ...string) bool {
 	if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) {
 		for _, fn := range files {
 			if path.Base(event.Name) == path.Base(fn) {
@@ -131,13 +134,9 @@ func (l *certLoader) handleFsEvents(event fsnotify.Event, files []string) bool {
 	return false
 }
 
-func (l *certLoader) setDeDupTimer(timer *time.Timer) *time.Timer {
+func setDeDupTimer(timer *time.Timer, callback func()) *time.Timer {
 	if timer == nil {
-		timer = time.AfterFunc(time.Hour, func() {
-			if err := l.storeCertificate(); err != nil {
-				l.log.WithError(err).Error("error reloading certificate")
-			}
-		})
+		timer = time.AfterFunc(time.Hour, callback)
 		timer.Stop()
 	}
 	timer.Reset(dedupDelay)

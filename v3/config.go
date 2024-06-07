@@ -23,6 +23,9 @@ var (
 	// ErrMismatchedApiVersions occurs when a service's minimum API version > its maximum API version.
 	ErrMismatchedApiVersions = errors.New("service's maximum API version must be greater than or equal to the minimum API version")
 
+	// ErrMissingTLSConfig occurs when TLS is enabled without required file paths
+	ErrMissingTLSConfig = errors.New("must set both CertFilePath and KeyFilePath to enable TLS transport")
+
 	defaultCORSAllowedMethods = []string{"GET", "POST", "PUT", "DELETE"}
 )
 
@@ -170,6 +173,10 @@ func (config *ServiceConfig) Validate() error {
 
 	if config.Version.Min > config.Version.Max {
 		return ErrMismatchedApiVersions
+	}
+
+	if config.Transport.TLS && (config.Transport.CertFilePath == "" || config.Transport.KeyFilePath == "") {
+		return ErrMissingTLSConfig
 	}
 
 	return nil
