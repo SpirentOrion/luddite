@@ -136,9 +136,9 @@ func (l *certLoader) handleFsEvent(event fsnotify.Event, files ...string) bool {
 
 func setDeDupTimer(timer *time.Timer, callback func()) *time.Timer {
 	if timer == nil {
-		timer = time.AfterFunc(time.Hour, callback)
-		timer.Stop()
+		timer = time.AfterFunc(dedupDelay, callback)
+	} else {
+		timer.Reset(dedupDelay)
 	}
-	timer.Reset(dedupDelay)
 	return timer
 }
