@@ -3,7 +3,6 @@ package luddite
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -23,6 +22,9 @@ var (
 
 	// ErrMismatchedApiVersions occurs when a service's minimum API version > its maximum API version.
 	ErrMismatchedApiVersions = errors.New("service's maximum API version must be greater than or equal to the minimum API version")
+
+	// ErrMissingTLSConfig occurs when TLS is enabled without required file paths
+	ErrMissingTLSConfig = errors.New("must set both CertFilePath and KeyFilePath to enable TLS transport")
 
 	defaultCORSAllowedMethods = []string{"GET", "POST", "PUT", "DELETE"}
 )
@@ -129,6 +131,9 @@ type ServiceConfig struct {
 
 		// KeyFilePath sets the path to the server's key file.
 		KeyFilePath string `yaml:"key_file_path"`
+
+		// ReloadOnUpdate monitor CertFilePath and KeyFilePath for changes, reload automatically
+		ReloadOnUpdate bool `yaml:"reload_on_update"`
 	}
 
 	Version struct {
@@ -170,6 +175,10 @@ func (config *ServiceConfig) Validate() error {
 		return ErrMismatchedApiVersions
 	}
 
+	if config.Transport.TLS && (config.Transport.CertFilePath == "" || config.Transport.KeyFilePath == "") {
+		return ErrMissingTLSConfig
+	}
+
 	return nil
 }
 
@@ -178,7 +187,7 @@ func (config *ServiceConfig) Validate() error {
 // struct members, or mapping keys that are duplicates, will result in an error)
 // into the struct pointed to by cfg.
 func NewConfig(r io.Reader, cfg interface{}) error {
-	buf, err := ioutil.ReadAll(r)
+	buf, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,10 @@
 **/example/example
 **/example/trace.*
 **/*.test
+.idea
+.vscode
+.Trash*
+*~
+*.out
+*.bak
+v3/vendor

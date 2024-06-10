@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -14,7 +15,7 @@ import (
 	"syscall"
 
 	"github.com/dimfeld/httptreemux"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -49,7 +50,7 @@ func NewService(config *ServiceConfig, configExt ...*ServiceConfigExt) (*Service
 		serviceLogWriter = configExt[0].ServiceLogWriter
 		accessLogWriter = configExt[0].AccessLogWriter
 	default:
-		return nil, fmt.Errorf("Only single instance of ServiceConfigExt allowed atmost")
+		return nil, fmt.Errorf("only a single instance of ServiceConfigExt allowed")
 	}
 
 	// Normalize and validate config
@@ -163,7 +164,7 @@ func (s *Service) Logger() *log.Logger {
 	return s.defaultLogger
 }
 
-// Logger returns the service's access logger instance.
+// AccessLogger returns the service's access logger instance.
 func (s *Service) AccessLogger() *log.Logger {
 	return s.accessLogger
 }
@@ -363,64 +364,64 @@ func (s *Service) addSingletonRoutes(router *httptreemux.ContextMux, basePath st
 }
 
 func (s *Service) run() error {
-	config := s.config
-
 	// Add optional HTTP handlers
-	if config.Metrics.Enabled {
+	if s.config.Metrics.Enabled {
 		s.addMetricsRoute()
 	}
-	if config.Profiler.Enabled {
+	if s.config.Profiler.Enabled {
 		s.addProfilerRoutes()
 	}
-	if config.Schema.Enabled {
+	if s.config.Schema.Enabled {
 		s.addSchemaRoutes()
 	}
+
+	var (
+		listener          net.Listener
+		httpHandler       http.Handler
+		certificateLoader CertificateLoader
+		err               error
+	)
 
 	// Add "top" as the final middleware handler
 	s.AddHandler(&topHandler{
 		globalRouter: s.globalRouter,
 		apiRouters:   s.apiRouters,
 	})
-	middleware := buildMiddleware(s.handlers)
+	httpHandler = buildMiddleware(s.handlers)
 
 	// If metrics are enabled let Prometheus have a look at the request first
-	var h http.HandlerFunc
-	if config.Metrics.Enabled {
-		h = instrumentHTTPHandler(middleware).ServeHTTP
-	} else {
-		h = middleware.ServeHTTP
+	if s.config.Metrics.Enabled {
+		httpHandler = instrumentHTTPHandler(httpHandler)
 	}
 
-	// Serve HTTP or HTTPS, depending on config. Use stoppable listener so
+	// Serve HTTP or HTTPS, depending on config. Use stoppable listener, so
 	// we can exit gracefully if signaled to do so.
-	if config.Transport.TLS {
-		s.defaultLogger.Debugf("HTTPS listening on %s", config.Addr)
-		l, err := NewStoppableTLSListener(config.Addr, true, config.Transport.CertFilePath, config.Transport.KeyFilePath)
-		if err != nil {
+	if s.config.Transport.TLS {
+		if certificateLoader, err = NewCertificateLoader(s.config, s.Logger()); err != nil {
 			return err
 		}
-
-		if err = http.Serve(l, h); err != nil {
-			if _, ok := err.(*ListenerStoppedError); ok {
-				err = nil
-			}
+		defer func() {
+			_ = certificateLoader.Close()
+		}()
+		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
+		if listener, err = NewStoppableTLSListener(s.config.Addr, true, certificateLoader.GetCertificate); err != nil {
+			return err
 		}
 	} else {
-		s.defaultLogger.Debugf("HTTP listening on %s", config.Addr)
-		l, err := NewStoppableTCPListener(config.Addr, true)
-		if err != nil {
+		s.defaultLogger.Debugf("HTTP listening on %s", s.config.Addr)
+		if listener, err = NewStoppableTCPListener(s.config.Addr, true); err != nil {
 			return err
 		}
-
-		h2s := new(http2.Server)
-		if err = http.Serve(l, h2c.NewHandler(h, h2s)); err != nil {
-			if _, ok := err.(*ListenerStoppedError); ok {
-				err = nil
-			}
-		}
+		httpHandler = h2c.NewHandler(httpHandler, new(http2.Server))
 	}
 
-	return nil
+	if err = http.Serve(listener, httpHandler); err != nil {
+		var lse *ListenerStoppedError
+		if errors.As(err, &lse) {
+			err = nil
+		}
+	}
+	return err
 }
 
 func openLogFile(logger *log.Logger, logPath string) {
