@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/K-Phoen/negotiation v0.0.0-20160529191006-5f2c7e65d11c
 	github.com/dimfeld/httptreemux v5.0.1+incompatible
-	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gorilla/schema v1.3.0
 	github.com/opentracing/basictracer-go v1.1.0
 	github.com/opentracing/opentracing-go v1.2.0
