@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -134,6 +135,9 @@ type ServiceConfig struct {
 
 		// ReloadOnUpdate monitor CertFilePath and KeyFilePath for changes, reload automatically
 		ReloadOnUpdate bool `yaml:"reload_on_update"`
+
+		// ReloadScanFrequency when monitoring for file changes, how often to scan for changes (default is 1m)
+		ReloadScanFrequency time.Duration `yaml:"reload_scan_frequency,omitempty"`
 	}
 
 	Version struct {
