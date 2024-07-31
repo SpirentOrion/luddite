@@ -132,8 +132,13 @@ type ServiceConfig struct {
 		// KeyFilePath sets the path to the server's key file.
 		KeyFilePath string `yaml:"key_file_path"`
 
-		// ReloadOnUpdate monitor CertFilePath and KeyFilePath for changes, reload automatically
-		ReloadOnUpdate bool `yaml:"reload_on_update"`
+		// CertWatcher monitor CertFilePath and KeyFilePath for changes
+		CertWatcher struct {
+			// Disabled disable monitoring and automatic reloads when cert/key files are changed
+			Disabled bool `yaml:"disabled,omitempty"`
+			// ScanMinutes when monitoring for file changes, how often to scan for changes (default is 5)
+			ScanMinutes int `yaml:"scan_minutes,omitempty"`
+		} `yaml:"cert_watcher"`
 	}
 
 	Version struct {

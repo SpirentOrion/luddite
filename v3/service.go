@@ -400,9 +400,7 @@ func (s *Service) run() error {
 		if certificateLoader, err = NewCertificateLoader(s.config, s.Logger()); err != nil {
 			return err
 		}
-		defer func() {
-			_ = certificateLoader.Close()
-		}()
+		defer certificateLoader.Close()
 		s.defaultLogger.Debugf("HTTPS listening on %s", s.config.Addr)
 		if listener, err = NewStoppableTLSListener(s.config.Addr, true, certificateLoader.GetCertificate); err != nil {
 			return err
