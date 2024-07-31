@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultWatcherScanFrequency = 1 * time.Minute
+	defaultWatcherScanMinutes = 5
 )
 
 type CertificateLoader interface {
@@ -37,13 +37,13 @@ func NewCertificateLoader(config *ServiceConfig, logger *log.Logger) (Certificat
 	if err := cl.storeCertificate(); err != nil {
 		return nil, err
 	}
-	if config.Transport.ReloadOnUpdate {
+	if !config.Transport.CertWatcher.Disabled {
 		cl.watcher = NewWatcher(logger, cl.certFilePath, cl.keyFilePath)
-		frequency := config.Transport.ReloadScanFrequency
-		if frequency == 0 {
-			frequency = defaultWatcherScanFrequency
+		scanMinutes := config.Transport.CertWatcher.ScanMinutes
+		if scanMinutes == 0 {
+			scanMinutes = defaultWatcherScanMinutes
 		}
-		cl.watcher.Watch(cl.storeCertificate, frequency)
+		cl.watcher.Watch(cl.storeCertificate, time.Duration(scanMinutes)*time.Minute)
 	}
 	return cl, nil
 }
