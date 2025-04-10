@@ -11,12 +11,9 @@ import (
 	"sync"
 	"time"
 
-	basictracer "github.com/opentracing/basictracer-go"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/basictracer-go"
+	"github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
-	ddopentracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
-	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/yaml.v2"
 )
 
@@ -43,7 +40,6 @@ func init() {
 	RegisterTracerKind("noop", new(noopTracerKind))
 	RegisterTracerKind("json", new(jsonTracerKind))
 	RegisterTracerKind("yaml", new(yamlTracerKind))
-	RegisterTracerKind("datadog", new(datadogTracerKind))
 }
 
 func RegisterTracerKind(name string, kind TracerKind) {
@@ -51,7 +47,7 @@ func RegisterTracerKind(name string, kind TracerKind) {
 		panic("empty tracer name")
 	}
 	if kind == nil {
-		panic("mising tracer kind")
+		panic("missing tracer kind")
 	}
 	if _, ok := tracerKinds[name]; ok {
 		panic(fmt.Sprintf("%s tracer kind registered twice", name))
@@ -99,7 +95,7 @@ func (*jsonTracerKind) New(params map[string]string, _ *log.Logger) (opentracing
 
 func (*jsonTracerKind) TraceId(span opentracing.Span) uint64 {
 	ctx := span.Context().(basictracer.SpanContext)
-	return uint64(ctx.TraceID)
+	return ctx.TraceID
 }
 
 func (*jsonTracerKind) IsNoop() bool {
@@ -111,7 +107,7 @@ type jsonSpanRecorder struct {
 }
 
 func (r *jsonSpanRecorder) RecordSpan(span basictracer.RawSpan) {
-	r.Encode(spanToBlob(&span))
+	_ = r.Encode(spanToBlob(&span))
 }
 
 type yamlTracerKind struct{}
@@ -138,7 +134,7 @@ func (*yamlTracerKind) New(params map[string]string, _ *log.Logger) (opentracing
 
 func (*yamlTracerKind) TraceId(span opentracing.Span) uint64 {
 	ctx := span.Context().(basictracer.SpanContext)
-	return uint64(ctx.TraceID)
+	return ctx.TraceID
 }
 
 func (*yamlTracerKind) IsNoop() bool {
@@ -161,35 +157,6 @@ func (r *yamlSpanRecorder) RecordSpan(span basictracer.RawSpan) {
 	}
 
 	_, _ = r.Write(buf)
-}
-
-type datadogTracerKind struct{}
-
-func (*datadogTracerKind) New(params map[string]string, logger *log.Logger) (opentracing.Tracer, error) {
-	opts := []ddtracer.StartOption{ddtracer.WithLogger(&datadogLogger{logger})}
-
-	if agentAddr := params["agent_addr"]; agentAddr != "" {
-		opts = append(opts, ddtracer.WithAgentAddr(agentAddr))
-	}
-
-	return ddopentracer.New(opts...), nil
-}
-
-func (*datadogTracerKind) TraceId(span opentracing.Span) uint64 {
-	ctx := span.Context().(ddtrace.SpanContext)
-	return uint64(ctx.TraceID())
-}
-
-func (*datadogTracerKind) IsNoop() bool {
-	return false
-}
-
-type datadogLogger struct {
-	*log.Logger
-}
-
-func (l *datadogLogger) Log(msg string) {
-	l.Debug(msg)
 }
 
 func spanToBlob(span *basictracer.RawSpan) map[string]interface{} {
